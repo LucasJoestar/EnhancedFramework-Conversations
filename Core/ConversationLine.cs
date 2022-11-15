@@ -10,7 +10,10 @@ using System;
 using UnityEngine;
 
 #if LOCALIZATION_ENABLED
+using EnhancedFramework.Localization;
 using UnityEngine.Localization;
+using UnityEngine.Localization.Tables;
+
 using DisplayName = EnhancedEditor.DisplayNameAttribute;
 #endif
 
@@ -128,11 +131,9 @@ namespace EnhancedFramework.ConversationSystem {
         /// </summary>
         public virtual float Duration {
             get {
-                if (ReferenceEquals(Line.Audio, null)) {
-                    return Text.Length;
-                }
-
-                return Line.Audio.length;
+                return Line.Audio.IsValid()
+                     ? Line.Audio.length
+                     : (Text.Length * .05f);
             }
         }
         #endregion
@@ -173,14 +174,39 @@ namespace EnhancedFramework.ConversationSystem {
         /// </summary>
         public virtual float Duration {
             get {
-                AudioClip _audio = Line.Audio.LoadAsset();
-                if (ReferenceEquals(_audio, null)) {
-                    return Text.Length;
+                if (GetAudioFile(out AudioClip _audio) && _audio.IsValid()) {
+                    return _audio.length;
                 }
 
-                return _audio.length;
+                return Text.Length * .05f;
             }
         }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get this line audio asset.
+        /// </summary>
+        /// <param name="_audio">This line audio asset.</param>
+        /// <returns>True if an audio asset was successfully found and loaded, false otherwise.</returns>
+        public bool GetAudioFile(out AudioClip _audio) {
+            return Line.Audio.GetLocalizedValue(out _audio);
+        }
+
+        #if LOCALIZATION_ENABLED
+        public override void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables) {
+            base.GetLocalizationTables(_stringTables, _assetTables);
+
+            // Get all localization tables used by this node.
+            if (Line.Text.GetLocalizedTable(out TableReference _table)) {
+                _stringTables.Add(_table);
+            }
+
+            if (Line.Audio.GetLocalizedTable(out _table)) {
+                _assetTables.Add(_table);
+            }
+        }
+        #endif
         #endregion
     }
     #endif

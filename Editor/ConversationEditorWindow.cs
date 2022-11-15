@@ -291,7 +291,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
                 // Node editor.
                 using (var _vertical = new EditorGUILayout.VerticalScope(EditorStyles.inspectorFullWidthMargins, GUILayout.Width(position.width - _configurationWidth - ConfigurationSectionSpacing))) {
                     int _index = 0;
-                    DrawConversationNode(conversation.root, Rect.zero, 0, ref _index, out Rect _position);
+                    DrawConversationNode(conversation.Root, Rect.zero, 0, ref _index, out Rect _position);
 
                     GUILayout.FlexibleSpace();
                     GUILayout.Space(7f);
@@ -445,7 +445,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
                 }
 
                 // Multi-selection keys.
-                EnhancedEditorGUIUtility.VerticalMultiSelectionKeys(nodes, IsNodeSelected, CanBeSelected, SelectNode, (selectedNodeIndexes.Count != 0) ? selectedNodeIndexes.Last() : -1);
+                EnhancedEditorGUIUtility.VerticalMultiSelectionKeys(nodes, IsNodeSelected, CanSelectNode, SelectNode, (selectedNodeIndexes.Count != 0) ? selectedNodeIndexes.Last() : -1);
 
                 // Context click menu.
                 if (EnhancedEditorGUIUtility.ContextClick(_global.rect)) {
@@ -540,9 +540,6 @@ namespace EnhancedFramework.ConversationSystem.Editor {
             // Label.
             GUIStyle _style = EnhancedEditorStyles.RichText;
             string _text = _node.Text;
-            if (string.IsNullOrEmpty(_text)) {
-                _text = ConversationNode.DefaultText;
-            }
 
             string _displayedText = _node.GetEditorDisplayedText().Replace('\n', ' ');
             string _newText;
@@ -593,7 +590,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
                 return true;
             }
 
-            EnhancedEditorGUIUtility.MultiSelectionClick(_full, nodes, _nodeIndex, IsNodeSelected, SelectNode);
+            EnhancedEditorGUIUtility.MultiSelectionClick(_full, nodes, _nodeIndex, IsNodeSelected, CanSelectNode, SelectNode);
             if (OnDragAndDrop(_thisPosition, _nodeIndex)) {
                 return false;
             }
@@ -726,7 +723,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
             return false;
         }
 
-        private bool CanBeSelected(int _index) {
+        private bool CanSelectNode(int _index) {
             ConversationNode _node = nodes[_index];
 
             while (_node.parent != null) {
@@ -773,7 +770,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
 
         private void CreateNode(Type _nodeType) {
             if (selectedNodeIndexes.Count == 0) {
-                conversation.AddNode(conversation.root, _nodeType).isSelected = true;
+                conversation.AddNode(conversation.Root, _nodeType).isSelected = true;
             } else {
                 for (int i = 0; i < selectedNodeIndexes.Count; i++) {
                     ConversationNode _node = GetSelectedNodeAtIndex(i);
@@ -793,7 +790,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
             }
 
             if (nodes[0].isSelected) {
-                Array.Resize(ref conversation.root.nodes, 0);
+                Array.Resize(ref conversation.Root.nodes, 0);
             } else {
                 selectedNodeIndexes.Sort();
 
@@ -926,7 +923,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
 
             GUIContent GetNodeTypeGUI(Type _nodeType, string _format) {
                 DisplayNameAttribute _attribute = _nodeType.GetCustomAttribute<DisplayNameAttribute>(false);
-                string _namespace = _nodeType.Namespace;
+                string _namespace = _nodeType.Namespace.Split('.')[0];
                 string _name = (_attribute != null) ? _attribute.Label.text : ObjectNames.NicifyVariableName(_nodeType.Name);
 
                 return new GUIContent(string.Format(_format, string.IsNullOrEmpty(_namespace) ? _name : $"{_namespace}/{_name}"));
@@ -952,7 +949,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
         }
 
         private void DuplicateNode() {
-            DupplicateNode(conversation.root);
+            DupplicateNode(conversation.Root);
             RefreshNodes(false);
 
             // ----- Local Method ----- \\
@@ -991,7 +988,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
 
                     // Convert.
                     case 2:
-                        ConvertNode(Conversation.root);
+                        ConvertNode(Conversation.Root);
                         return;
 
                     default:
@@ -1083,7 +1080,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
             }
 
             // Simply draw the conversation inspector on multi node selection or when the root node is selected.
-            if ((selectedNodeIndexes.Count != 1) || (selectedNode == Conversation.root)) {
+            if ((selectedNodeIndexes.Count != 1) || (selectedNode == Conversation.Root)) {
                 return false;
             }
 
@@ -1143,7 +1140,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
 
             ConversationNodeUtility.copyBuffer = null;
 
-            if ((conversation != null) && (conversation.root != null)) {
+            if ((conversation != null) && (conversation.Root != null)) {
                 RefreshNodes(_unselect);
             }
         }
@@ -1156,7 +1153,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
                 doFocusSelection = false;
             }
 
-            RegisterNode(conversation.root, null);
+            RegisterNode(conversation.Root, null);
             RefreshSelectedNode();
 
             // ----- Local Method ----- \\
@@ -1205,9 +1202,9 @@ namespace EnhancedFramework.ConversationSystem.Editor {
 
             serializedObject.Update();
             SerializedProperty _root = serializedObject.FindProperty("root");
-            if (!RefreshSelectedNodeRecursive(conversation.root, _root)) {
+            if (!RefreshSelectedNodeRecursive(conversation.Root, _root)) {
                 selectedProperty = null;
-                selectedNode = conversation.root;
+                selectedNode = conversation.Root;
             }
 
             InternalEditorUtility.RepaintAllViews();

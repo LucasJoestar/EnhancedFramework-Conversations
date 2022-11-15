@@ -35,6 +35,13 @@ namespace EnhancedFramework.ConversationSystem {
         /// </summary>
         public bool IsPlaying { get; private set; } = false;
 
+        /// <summary>
+        /// The name of this player <see cref="Conversation"/>.
+        /// </summary>
+        public string Name {
+            get { return Conversation.name; }
+        }
+
         // -----------------------
 
         /// <summary>
@@ -46,7 +53,7 @@ namespace EnhancedFramework.ConversationSystem {
         #region State
         /// <inheritdoc cref="Setup(Conversation, ConversationNode)"/>
         public void Setup(Conversation _conversation) {
-            Setup(_conversation, _conversation.root);
+            Setup(_conversation, _conversation.Root);
         }
 
         /// <summary>
@@ -67,8 +74,12 @@ namespace EnhancedFramework.ConversationSystem {
         /// </summary>
         /// <param name="_onNodeQuit">Delegate to be called once the current node has been quit.</param>
         public void Close(Action _onNodeQuit = null) {
-            IsPlaying = false;
+            if (!IsPlaying) {
+                _onNodeQuit?.Invoke();
+                return;
+            }
 
+            IsPlaying = false;
             OnClose(_onNodeQuit);
         }
 
@@ -97,6 +108,13 @@ namespace EnhancedFramework.ConversationSystem {
         #endregion
 
         #region Behaviour
+        /// <summary>
+        /// Replays the current node from the start.
+        /// </summary>
+        public virtual void ReplayCurrentNode() {
+            PlayNode(CurrentNode);
+        }
+
         /// <summary>
         /// Quit the current node and play new one.
         /// <para/>

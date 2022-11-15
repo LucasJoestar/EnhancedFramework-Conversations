@@ -37,7 +37,7 @@ namespace EnhancedFramework.ConversationSystem {
             get {
                 return GetLink(out ConversationNode _link)
                      ? _link.Text
-                     : "NULL";
+                     : base.Text;
             } set {
                 if (GetLink(out ConversationNode _link)) {
                     _link.Text = value;
@@ -174,6 +174,12 @@ namespace EnhancedFramework.ConversationSystem {
             }
 
             return 1;
+        }
+
+        protected internal override string GetEditorDisplayedText() {
+            return GetLink(out ConversationNode _link)
+                 ? _link.Text
+                 : "NULL";
         }
 
         protected internal override int OnEditorContextMenu(int _index, out GUIContent _content, out Action _callback, out bool _enabled) {

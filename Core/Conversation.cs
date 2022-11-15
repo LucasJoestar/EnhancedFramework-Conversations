@@ -3,17 +3,26 @@
 // Notes:
 //
 //  Use the [UnityEngine.Scripting.APIUpdating.MovedFrom(true, "Namespace", "Assembly", "Class")]
-//  attribute to remove a node managed reference error on script or assembly rename.
+//  attribute to remove a managed reference error when renaming a script or an assembly.
 //
 // ===================================================================================================== //
 
 using EnhancedEditor;
+using EnhancedFramework.Core;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 #if DOTWEEN_ENABLED
 using DG.Tweening;
+#endif
+
+#if LOCALIZATION_ENABLED
+using EnhancedFramework.Localization;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Tables;
+
+using DisplayName = EnhancedEditor.DisplayNameAttribute;
 #endif
 
 #if UNITY_EDITOR
@@ -54,11 +63,11 @@ namespace EnhancedFramework.ConversationSystem {
                 AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(conversation), $"{Conversation.Prefix}{value}");
             }
         }
+        #endif
 
         public override string DefaultSpeaker {
             get { return "[ROOT]"; }
         }
-        #endif
         #endregion
 
         #region Behaviour
@@ -104,13 +113,13 @@ namespace EnhancedFramework.ConversationSystem {
         protected override void OnSetup() {
             base.OnSetup();
 
-            Conversation.Log($"{typeof(ConversationPlayer).Name} - Setup \'{Conversation.name}\', ready to play.");
+            Conversation.Log($"{typeof(ConversationPlayer).Name} - Setup \'{Name}\', ready to play.");
         }
 
         protected override void OnClose(Action _onNodeQuit = null) {
             base.OnClose(_onNodeQuit);
 
-            Conversation.Log($"{typeof(ConversationPlayer).Name} - Terminate playing \'{Conversation.name}\'.");
+            Conversation.Log($"{typeof(ConversationPlayer).Name} - Terminate playing \'{Name}\'.");
         }
         #endregion
 
@@ -152,18 +161,30 @@ namespace EnhancedFramework.ConversationSystem {
     /// <see cref="ScriptableObject"/> database for a conversation.
     /// </summary>
     [CreateAssetMenu(fileName = Prefix + "NewConversation", menuName = "Enhanced Editor/Conversation", order = 200)]
-    public class Conversation : ScriptableObject {
+    public class Conversation : ScriptableObject
+                                #if LOCALIZATION_ENABLED
+                                , ILocalizable
+                                #endif
+    {
         public const string Prefix = "CNV_";
 
         #region Global Members
         [Section("Conversation")]
 
-        [SerializeField, DisplayName("Default Node")] private SerializedType<ConversationNode> defaultNodeType = new SerializedType<ConversationNode>();
-        [SerializeField, DisplayName("Default Link")] private SerializedType<ConversationLink> defaultLinkType = new SerializedType<ConversationLink>(SerializedTypeConstraint.BaseType);
+        [SerializeField, DisplayName("Default Node")]
+        private SerializedType<ConversationNode> defaultNodeType = new SerializedType<ConversationNode>(SerializedTypeConstraint.None, typeof(ConversationTextLine),
+                                                                                                                                       #if LOCALIZATION_ENABLED
+                                                                                                                                       typeof(ConversationLocalizedLine),
+                                                                                                                                       #endif
+                                                                                                                                       typeof(ConversationLink));
+
+        [SerializeField, DisplayName("Default Link")]
+        private SerializedType<ConversationLink> defaultLinkType = new SerializedType<ConversationLink>(SerializedTypeConstraint.BaseType, typeof(ConversationLink));
 
         [Space(5f)]
 
-        [SerializeField, DisplayName("Conversation Player")] private SerializedType<ConversationPlayer> playerType = new SerializedType<ConversationPlayer>();
+        [SerializeField, DisplayName("Conversation Player")]
+        private SerializedType<ConversationPlayer> playerType = new SerializedType<ConversationPlayer>(SerializedTypeConstraint.None, typeof(ConversationDefaultPlayer));
 
         /// <summary>
         /// The default type of node used for this conversation (must be derived from <see cref="ConversationNode"/>).
@@ -189,11 +210,8 @@ namespace EnhancedFramework.ConversationSystem {
             set {
                 playerType.Type = value;
 
-                // Only update settings if type change has been validated.
-                if (playerType.Type == value) {
-                    var _settings = Activator.CreateInstance(GetSettingsType(value));
-                    settings = EnhancedUtility.CopyObjectContent(settings, _settings) as ConversationSettings;
-                }
+                var _settings = Activator.CreateInstance(GetSettingsType(value));
+                settings = EnhancedUtility.CopyObjectContent(settings, _settings) as ConversationSettings;
             }
         }
 
@@ -212,6 +230,7 @@ namespace EnhancedFramework.ConversationSystem {
 
         /// <summary>
         /// The speakers of this conversation.
+        /// <br/> Used by property drawers.
         /// </summary>
         public string[] Speakers {
             get {
@@ -238,7 +257,7 @@ namespace EnhancedFramework.ConversationSystem {
 
         #region Node Management
         /// <summary>
-        /// Adds a new default node from this conversation, at a specific root node.
+        /// Adds a new default node to this conversation, at a specific root node.
         /// </summary>
         /// <inheritdoc cref="AddNode(ConversationNode, Type)"/>
         public ConversationNode AddDefaultNode(ConversationNode _root) {
@@ -319,11 +338,25 @@ namespace EnhancedFramework.ConversationSystem {
 
             return null;
         }
+
+        #if LOCALIZATION_ENABLED
+        /// <summary>
+        /// Get all localization <see cref="TableReference"/> used in this conversation.
+        /// </summary>
+        /// <param name="_stringTables"><see cref="StringTable"/> references collection to fill.</param>
+        /// <param name="_assetTables"><see cref="AssetTable"/> references collection to fill.</param>
+        public void GetLocalizationTables(Set<TableReference> _stringTables,  Set<TableReference> _assetTables) {
+            root.GetLocalizationTables(_stringTables, _assetTables);
+        }
+        #endif
         #endregion
 
         #region Editor Utility
         #if UNITY_EDITOR
         private void Awake() {
+            // Root conversation setup.
+            root.conversation = this;
+
             RefreshValues();
         }
 
@@ -338,54 +371,9 @@ namespace EnhancedFramework.ConversationSystem {
                 return;
             }
 
-            // Root conversation setup.
-            if (root.conversation == null) {
-                root.conversation = this;
-            }
-
-            // Get the most derived conversation node and link type as default type.
-            if (DefaultNodeType == null) {
-                DefaultNodeType = GetDerivedType(typeof(ConversationNode), typeof(ConversationTextLine), new Type[] { typeof(ConversationRoot),
-                                                                                                                      typeof(ConversationTextLine),
-                                                                                                         #if LOCALIZATION_ENABLED
-                                                                                                                      typeof(ConversationLocalizedLine),
-                                                                                                         #endif
-                                                                                                                      typeof(ConversationLink) });
-
-                EditorUtility.SetDirty(this);
-            }
-
-            if (DefaultLinkType == null) {
-                DefaultLinkType = GetDerivedType(typeof(ConversationLink), typeof(ConversationLink), new Type[] { typeof(ConversationLink) });
-
-                EditorUtility.SetDirty(this);
-            }
-
-            // Do the same for the player its associated settings.
-            if (PlayerType == null) {
-                PlayerType = GetDerivedType(typeof(ConversationPlayer), typeof(ConversationDefaultPlayer), new Type[] { typeof(ConversationDefaultPlayer) });
-
-                EditorUtility.SetDirty(this);
-            }
-
+            // Settings type update.
             if (GetSettingsType(PlayerType) != settings.GetType()) {
                 PlayerType = playerType;
-            }
-
-            // ----- Local Methods ----- \\
-
-            Type GetDerivedType(Type _base, Type _default, Type[] _ignored) {
-                var _types = TypeCache.GetTypesDerivedFrom(_base);
-
-                if (_types.Count > 0) {
-                    foreach (var _type in _types) {
-                        if (!_type.IsAbstract && !_type.IsDefined(typeof(EtherealAttribute), false) && !ArrayUtility.Contains(_ignored, _type)) {
-                            return _type;
-                        }
-                    }
-                }
-
-                return _default;
             }
         }
         #endif

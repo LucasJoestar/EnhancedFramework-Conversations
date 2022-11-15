@@ -5,8 +5,13 @@
 // ===================================================================================================== //
 
 using EnhancedEditor;
+using EnhancedFramework.Core;
 using System;
 using UnityEngine;
+
+#if LOCALIZATION_ENABLED
+using UnityEngine.Localization.Tables;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor.AnimatedValues;
@@ -20,7 +25,7 @@ namespace EnhancedFramework.ConversationSystem {
     /// <br/>
     /// Inherit from this to create your own nodes.
     /// </summary>
-    [Serializable]
+    [Serializable, Ethereal]
     public class ConversationNode {
         #region Global Members
         public const string DefaultText = "EMPTY";
@@ -42,7 +47,7 @@ namespace EnhancedFramework.ConversationSystem {
         /// The <see cref="string"/> text value of this node.
         /// </summary>
         public virtual string Text {
-            get { return DefaultText; }
+            get { return string.Empty; }
             set { }
         }
 
@@ -97,6 +102,13 @@ namespace EnhancedFramework.ConversationSystem {
         internal protected virtual bool ShowNodes {
             get { return true; }
         }
+
+        // -----------------------
+
+        /// <summary>
+        /// Prevents from instancing new instances of this base class.
+        /// </summary>
+        protected ConversationNode() { }
         #endregion
 
         #region Node Management
@@ -165,7 +177,7 @@ namespace EnhancedFramework.ConversationSystem {
                     _link.RemoveLink();
                 }
 
-                UpdateLink(_conversation.root);
+                UpdateLink(_conversation.Root);
 
                 // ----- Local Methods ----- \\
 
@@ -206,6 +218,26 @@ namespace EnhancedFramework.ConversationSystem {
         public virtual void Quit(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
             _onQuit?.Invoke();
         }
+        #endregion
+
+        #region Utility
+        #if LOCALIZATION_ENABLED
+        /// <summary>
+        /// Get all localization <see cref="TableReference"/> used in this node and its connections.
+        /// </summary>
+        /// <inheritdoc cref="Conversation.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
+        public virtual void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables) {
+            // If this node connections are hidden, ignore them.
+            // Avoids cyclic loops with links.
+            if (!ShowNodes) {
+                return;
+            }
+
+            for (int i = 0; i < NodeCount; i++) {
+                GetNodeAt(i).GetLocalizationTables(_stringTables, _assetTables);
+            }
+        }
+        #endif
         #endregion
 
         #region Editor Utility

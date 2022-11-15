@@ -4,7 +4,9 @@
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core",
-        "Unity.Localization"
+        "EnhancedFramework.Localization",
+        "Unity.Localization",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
