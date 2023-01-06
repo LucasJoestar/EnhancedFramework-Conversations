@@ -1,15 +1,16 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
+using EnhancedEditor;
 using EnhancedEditor.Editor;
 using EnhancedFramework.Core;
 using UnityEditor;
 using UnityEngine;
 
-namespace EnhancedFramework.ConversationSystem.Editor {
+namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
     /// Custom <see cref="ConversationNode"/> drawer, used to display the class content when using the <see cref="SerializeReference"/> attribute.
     /// </summary>

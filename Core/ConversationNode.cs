@@ -1,11 +1,16 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
+
+#if LOCALIZATION_PACKAGE
+#define LOCALIZATION_ENABLED
+#endif
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
+using EnhancedFramework.Localization;
 using System;
 using UnityEngine;
 
@@ -19,32 +24,39 @@ using UnityEditor.AnimatedValues;
 
 using ArrayUtility = EnhancedEditor.ArrayUtility;
 
-namespace EnhancedFramework.ConversationSystem {
+namespace EnhancedFramework.Conversations {
     /// <summary>
     /// <see cref="Conversation"/> node base class.
-    /// <br/>
-    /// Inherit from this to create your own nodes.
+    /// <br/> Inherit from this to create your own nodes.
+    /// <para/>
+    /// Cannot be set as abstract for serialization purposes.
     /// </summary>
     [Serializable, Ethereal]
-    public class ConversationNode {
+    public class ConversationNode
+                                  #if LOCALIZATION_ENABLED
+                                  : ILocalizable
+                                  #endif
+    {
         #region Global Members
-        public const string DefaultText = "EMPTY";
-        public const string DefaultSpeakerName = "[NONE]";
+        public const string DefaultSpeakerName  = "[NONE]";
+        public const string DefaultText         = "EMPTY";
 
         [PreventCopy, SerializeField, Enhanced, ReadOnly] internal int guid = EnhancedUtility.GenerateGUID();
 
         #if UNITY_EDITOR
+        // Conversation editor window related properties.
+
         [NonSerialized] internal bool isSelected = false;
         [SerializeField, HideInInspector] internal AnimBool foldout = new AnimBool(true);
         [SerializeReference, NonSerialized] internal ConversationNode parent = null;
         #endif
 
-        [PreventCopy, SerializeReference, HideInInspector] internal protected ConversationNode[] nodes = new ConversationNode[] { };
+        [SerializeReference, HideInInspector, PreventCopy] internal protected ConversationNode[] nodes = new ConversationNode[0];
 
         // -----------------------
 
         /// <summary>
-        /// The <see cref="string"/> text value of this node.
+        /// The <see cref="string"/> text content of this node (empty is none).
         /// </summary>
         public virtual string Text {
             get { return string.Empty; }
@@ -52,7 +64,7 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// The unique guid of this node.
+        /// Unique guid of this node.
         /// </summary>
         public int Guid {
             get { return guid; }
@@ -66,22 +78,21 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// The index of this node speaker.
-        /// <br/> -1 if no speaker is assigned.
+        /// Index of this node speaker (-1 if none assigned).
         /// </summary>
         public virtual int SpeakerIndex {
             get { return -1; }
         }
 
         /// <summary>
-        /// The total count of this node connection <see cref="ConversationNode"/>.
+        /// Total count of this node connections (<see cref="ConversationNode"/>).
         /// </summary>
         public virtual int NodeCount {
             get { return nodes.Length; }
         }
 
         /// <summary>
-        /// Indicates if this node should close the conversation or if it has available connection(s).
+        /// Indicates if the conversation should be closed after playing this node (check for any available connection(s) by default).
         /// </summary>
         public virtual bool IsClosingNode {
             get { return (NodeCount == 0) || !Array.Exists(nodes, (n) => n.IsAvailable); }
@@ -90,34 +101,36 @@ namespace EnhancedFramework.ConversationSystem {
         // -----------------------
 
         /// <summary>
-        /// The default speaker name displayed for this node (mostly used in the editor).
+        /// Default speaker name displayed for this node type (especially used in the editor).
         /// </summary>
         public virtual string DefaultSpeaker {
             get { return DefaultSpeakerName; }
         }
 
         /// <summary>
-        /// Indicates if this node connection <see cref="ConversationNode"/> should be displayed in the editor.
+        /// Indicates if this node connections (<see cref="ConversationNode"/>) should be displayed in the editor.
         /// </summary>
         internal protected virtual bool ShowNodes {
             get { return true; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <summary>
-        /// Prevents from instancing new instances of this base class.
+        /// Prevents from creating new instances of this base class.
         /// </summary>
         protected ConversationNode() { }
         #endregion
 
         #region Node Management
         /// <summary>
-        /// Get this node connection <see cref="ConversationNode"/> at a specific index.
+        /// Get this node connection at a specific index (<see cref="ConversationNode"/>).
         /// <br/> Use <see cref="NodeCount"/> to get the total amount of connection nodes.
         /// </summary>
         /// <param name="_index">The index to get the connection node at.</param>
-        /// <returns>The connection <see cref="ConversationNode"/> at the given index.</returns>
+        /// <returns>This node connection at the given index (<see cref="ConversationNode"/>).</returns>
         public virtual ConversationNode GetNodeAt(int _index) {
             return nodes[_index];
         }
@@ -131,10 +144,10 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// Copies all the values of a specific <see cref="ConversationNode"/> into this node.
+        /// Copies all the values of a specific <see cref="ConversationNode"/> into this one.
         /// </summary>
         /// <param name="_source">The source <see cref="ConversationNode"/> to copy the values from.</param>
-        /// <param name="_copyConnections">Whether the connection <see cref="ConversationNode"/> should also be copied or not.</param>
+        /// <param name="_copyConnections">Whether the connection nodes should also be copied or not.</param>
         /// <returns>This node instance.</returns>
         internal ConversationNode CopyNode(ConversationNode _source, bool _copyConnections = true) {
             EnhancedUtility.CopyObjectContent(_source, this);
@@ -163,12 +176,14 @@ namespace EnhancedFramework.ConversationSystem {
         /// <param name="_doTransmuteConnections">Whether this node connections should be transmuted or not.</param>
         /// <returns>The new transmuted node instance.</returns>
         internal ConversationNode Transmute(Conversation _conversation, Type _type, bool _doTransmuteSelf = true, bool _doTransmuteConnections = true) {
+            // Connections.
             if (_doTransmuteConnections) {
                 for (int i = 0; i < nodes.Length; i++) {
                     nodes[i].Transmute(_conversation, _type);
                 }
             }
 
+            // Self.
             if (_doTransmuteSelf) {
                 var _new = Activator.CreateInstance(_type);
                 ConversationNode _node = EnhancedUtility.CopyObjectContent(this, _new, true) as ConversationNode;
@@ -179,7 +194,7 @@ namespace EnhancedFramework.ConversationSystem {
 
                 UpdateLink(_conversation.Root);
 
-                // ----- Local Methods ----- \\
+                // ----- Local Method ----- \\
 
                 void UpdateLink(ConversationNode _root) {
                     for (int i = 0; i < _root.nodes.Length; i++) {
@@ -214,18 +229,15 @@ namespace EnhancedFramework.ConversationSystem {
         /// </summary>
         /// <param name="_player"><inheritdoc cref="Doc(Conversation, ConversationSettings, ConversationPlayer)" path="/param[@name='_player']"/></param>
         /// <param name="_isClosingConversation">Indicates if the conversation is being closed or will continue to be played.</param>
-        /// <param name="_onQuit">Delegate to be called once this node has been quit.</param>
+        /// <param name="_onQuit">Delegate to be called once this node was quit.</param>
         public virtual void Quit(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
             _onQuit?.Invoke();
         }
         #endregion
 
-        #region Utility
+        #region Localization
         #if LOCALIZATION_ENABLED
-        /// <summary>
-        /// Get all localization <see cref="TableReference"/> used in this node and its connections.
-        /// </summary>
-        /// <inheritdoc cref="Conversation.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
+        /// <inheritdoc cref="ILocalizable.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
         public virtual void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables) {
             // If this node connections are hidden, ignore them.
             // Avoids cyclic loops with links.

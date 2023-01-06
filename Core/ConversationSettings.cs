@@ -1,17 +1,27 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
+#if LOCALIZATION_PACKAGE
+#define LOCALIZATION_ENABLED
+#endif
+
+using EnhancedFramework.Core;
+using EnhancedFramework.Localization;
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.ConversationSystem {
+#if LOCALIZATION_ENABLED
+using UnityEngine.Localization.Tables;
+#endif
+
+namespace EnhancedFramework.Conversations {
     /// <summary>
-    /// The default behaviour used to determine the next node to play from a <see cref="Conversation"/>.
+    /// Behaviours used to get the next node to play from a <see cref="ConversationPlayer"/>.
     /// </summary>
-    public enum GetNextNodeBehaviour {
+    public enum NextNodeBehaviour {
         PlayFirst,
         PlayLast,
         Random
@@ -22,26 +32,37 @@ namespace EnhancedFramework.ConversationSystem {
     /// <br/> You can inherit from <see cref="ConversationSettings{T}"/> for a quick implementation.
     /// </summary>
     [Serializable]
-    public abstract class ConversationSettings {
+    public abstract class ConversationSettings
+                                               #if LOCALIZATION_ENABLED
+                                               : ILocalizable
+                                               #endif
+    {
         #region Global Members
         /// <summary>
-        /// The default behaviour used to determine the next node to play using these settings.
+        /// Default behaviour used to determine the next node to play.
         /// </summary>
-        public GetNextNodeBehaviour NextNodeBehaviour = GetNextNodeBehaviour.PlayFirst;
+        public NextNodeBehaviour NextNodeBehaviour = NextNodeBehaviour.PlayFirst;
 
         /// <summary>
-        /// The total count of speakers in the conversation.
+        /// Total count of speakers in the conversation.
         /// </summary>
         public abstract int SpeakerCount { get; }
         #endregion
 
         #region Speaker
         /// <summary>
-        /// Get the name of the speaker at a specific index.
+        /// Get a speaker name at a given index.
         /// </summary>
         /// <param name="_index">Index of the speaker to get.</param>
         /// <returns>The name of the speaker.</returns>
         public abstract string GetSpeakerAt(int _index);
+        #endregion
+
+        #region Localization
+        #if LOCALIZATION_ENABLED
+        /// <inheritdoc cref="ILocalizable.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
+        public virtual void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables) { }
+        #endif
         #endregion
     }
 
@@ -54,7 +75,7 @@ namespace EnhancedFramework.ConversationSystem {
         [Space(10f)]
 
         /// <summary>
-        /// The speakers of the conversation.
+        /// Speakers of the conversation.
         /// </summary>
         public T[] Speakers = new T[] { };
 

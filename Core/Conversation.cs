@@ -1,21 +1,21 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
 //  Use the [UnityEngine.Scripting.APIUpdating.MovedFrom(true, "Namespace", "Assembly", "Class")]
 //  attribute to remove a managed reference error when renaming a script or an assembly.
 //
-// ===================================================================================================== //
+// ================================================================================================ //
+
+#if LOCALIZATION_PACKAGE
+#define LOCALIZATION_ENABLED
+#endif
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-
-#if DOTWEEN_ENABLED
-using DG.Tweening;
-#endif
 
 #if LOCALIZATION_ENABLED
 using EnhancedFramework.Localization;
@@ -31,8 +31,8 @@ using UnityEditor;
 
 using ArrayUtility = EnhancedEditor.ArrayUtility;
 
-[assembly: InternalsVisibleTo("EnhancedFramework.ConversationSystem.Editor")]
-namespace EnhancedFramework.ConversationSystem {
+[assembly: InternalsVisibleTo("EnhancedFramework.Conversations.Editor")]
+namespace EnhancedFramework.Conversations {
     /// <summary>
     /// <see cref="Conversation"/> root node class.
     /// </summary>
@@ -41,7 +41,7 @@ namespace EnhancedFramework.ConversationSystem {
         #region Global Members
         #if UNITY_EDITOR
         /// <summary>
-        /// Only in the editor, display and edit the conversation name.
+        /// In the editor only, used to display and edit the conversation name.
         /// </summary>
         [SerializeField] internal Conversation conversation = null;
 
@@ -53,14 +53,14 @@ namespace EnhancedFramework.ConversationSystem {
                     return base.Text;
                 }
 
-                return conversation.name.Replace(Conversation.Prefix, string.Empty);
+                return conversation.name.Replace(conversation.name.GetPrefix(), string.Empty);
             }
             set {
                 if (conversation == null) {
                     return;
                 }
 
-                AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(conversation), $"{Conversation.Prefix}{value}");
+                AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(conversation), $"{conversation.name.GetPrefix()}{value}");
             }
         }
         #endif
@@ -93,14 +93,6 @@ namespace EnhancedFramework.ConversationSystem {
 
             return 1;
         }
-
-        internal protected override int OnEditorContextMenu(int _index, out GUIContent _content, out Action _callback, out bool _enabled) {
-            _content = null;
-            _callback = null;
-            _enabled = false;
-
-            return 0;
-        }
         #endregion
     }
 
@@ -113,33 +105,40 @@ namespace EnhancedFramework.ConversationSystem {
         protected override void OnSetup() {
             base.OnSetup();
 
-            Conversation.Log($"{typeof(ConversationPlayer).Name} - Setup \'{Name}\', ready to play.");
+            this.LogMessage($"Setup \'{Name}\', ready to be played", Conversation);
         }
 
         protected override void OnClose(Action _onNodeQuit = null) {
             base.OnClose(_onNodeQuit);
 
-            Conversation.Log($"{typeof(ConversationPlayer).Name} - Terminate playing \'{Name}\'.");
+            this.LogMessage($"Closing \'{Name}\'", Conversation);
+            CancelPlay();
         }
         #endregion
 
         #region Behaviour
+        private static readonly int DelayerID = "ConversationDefaultPlayer".GetHashCode();
+
+        // -----------------------
+
         public override void PlayCurrentNode() {
             base.PlayCurrentNode();
 
-            Conversation.Log($"{typeof(ConversationPlayer).Name} - Playing node {CurrentNode.Guid} - \'{CurrentNode.Text}\'.");
+            this.LogMessage($"Playing node {CurrentNode.Guid} - \"{CurrentNode.Text}\"", Conversation);
 
-            #if DOTWEEN_ENABLED
-            DOVirtual.DelayedCall(.01f, PlayNextNode, false);
-            #else
-            PlayNextNode();
-            #endif
+            // Use a delay before playing the next node,
+            // avoiding infinite loops on referenced links.
+            Delayer.Call(DelayerID, .1f, PlayNextNode, false);
+        }
+
+        private void CancelPlay() {
+            Delayer.CancelCall(DelayerID);
         }
         #endregion
     }
 
     /// <summary>
-    /// Default <see cref="ConversationSettings"/> class, only containing an array of string for the speakers.
+    /// Default <see cref="ConversationSettings"/> class, only containing an array of <see cref="string"/> for the speakers.
     /// </summary>
     [Serializable, DisplayName("<Default>")]
     public class ConversationDefaultSettings : ConversationSettings<string> {
@@ -160,17 +159,18 @@ namespace EnhancedFramework.ConversationSystem {
     /// <summary>
     /// <see cref="ScriptableObject"/> database for a conversation.
     /// </summary>
-    [CreateAssetMenu(fileName = Prefix + "NewConversation", menuName = "Enhanced Editor/Conversation", order = 200)]
+    [CreateAssetMenu(fileName = FilePrefix + "NewConversation", menuName = FrameworkUtility.MenuPath + "Conversation", order = FrameworkUtility.MenuOrder + 50)]
     public class Conversation : ScriptableObject
                                 #if LOCALIZATION_ENABLED
                                 , ILocalizable
                                 #endif
     {
-        public const string Prefix = "CNV_";
+        public const string FilePrefix = "CNV_";
 
         #region Global Members
         [Section("Conversation")]
 
+        [Tooltip("Node type to be used when creating a new default node in this conversation")]
         [SerializeField, DisplayName("Default Node")]
         private SerializedType<ConversationNode> defaultNodeType = new SerializedType<ConversationNode>(SerializedTypeConstraint.None, typeof(ConversationTextLine),
                                                                                                                                        #if LOCALIZATION_ENABLED
@@ -178,16 +178,18 @@ namespace EnhancedFramework.ConversationSystem {
                                                                                                                                        #endif
                                                                                                                                        typeof(ConversationLink));
 
+        [Tooltip("Node type to be used when creating a new link in this conversation")]
         [SerializeField, DisplayName("Default Link")]
         private SerializedType<ConversationLink> defaultLinkType = new SerializedType<ConversationLink>(SerializedTypeConstraint.BaseType, typeof(ConversationLink));
 
         [Space(5f)]
 
+        [Tooltip("Class used to play this conversation, managing its behaviour")]
         [SerializeField, DisplayName("Conversation Player")]
         private SerializedType<ConversationPlayer> playerType = new SerializedType<ConversationPlayer>(SerializedTypeConstraint.None, typeof(ConversationDefaultPlayer));
 
         /// <summary>
-        /// The default type of node used for this conversation (must be derived from <see cref="ConversationNode"/>).
+        /// Node type to be used when creating a new default node in this conversation (must be derived from <see cref="ConversationNode"/>).
         /// </summary>
         public Type DefaultNodeType {
             get { return defaultNodeType.Type; }
@@ -195,7 +197,7 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// The default type of link node used for this conversation (must be derived from <see cref="ConversationLink"/>).
+        /// Node type to be used when creating a new link in this conversation (must be derived from <see cref="ConversationLink"/>).
         /// </summary>
         public Type DefaultLinkType {
             get { return defaultLinkType.Type; }
@@ -203,7 +205,7 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// The type of player used for this conversation (must be derived from <see cref="ConversationPlayer{T}"/>).
+        /// Type class used to play this conversation, managing its behaviour (must be derived from <see cref="ConversationPlayer{T}"/>).
         /// </summary>
         public Type PlayerType {
             get { return playerType.Type; }
@@ -219,18 +221,18 @@ namespace EnhancedFramework.ConversationSystem {
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeReference, Block] protected ConversationSettings settings = new ConversationDefaultSettings();
+        [SerializeReference, Enhanced, Block] protected ConversationSettings settings = new ConversationDefaultSettings();
 
         /// <summary>
-        /// The settings of this conversation.
+        /// <see cref="ConversationPlayer"/>-related settings of this conversation.
         /// </summary>
         public ConversationSettings Settings {
             get { return settings; }
         }
 
         /// <summary>
-        /// The speakers of this conversation.
-        /// <br/> Used by property drawers.
+        /// Speaker names of this conversation.
+        /// <br/> Especially used by property drawers.
         /// </summary>
         public string[] Speakers {
             get {
@@ -253,6 +255,49 @@ namespace EnhancedFramework.ConversationSystem {
         public ConversationRoot Root {
             get { return root; }
         }
+
+        /// <summary>
+        /// Indicates if this <see cref="Conversation"/> has any available node to play.
+        /// </summary>
+        public bool IsPlayable {
+            get {
+                foreach (var _node in root.nodes) {
+                    if (_node.IsAvailable) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+        #endregion
+
+        #region Scriptable Object
+        #if UNITY_EDITOR
+        private void Awake() {
+            // Root conversation setup.
+            root.conversation = this;
+
+            RefreshValues();
+        }
+
+        private void OnValidate() {
+            RefreshValues();
+        }
+
+        // -----------------------
+
+        private void RefreshValues() {
+            if (Application.isPlaying) {
+                return;
+            }
+
+            // Settings type update.
+            if (GetSettingsType(PlayerType) != settings.GetType()) {
+                PlayerType = playerType;
+            }
+        }
+        #endif
         #endregion
 
         #region Node Management
@@ -288,10 +333,11 @@ namespace EnhancedFramework.ConversationSystem {
         public void RemoveNode(ConversationNode _node) {
             DoRemoveNode(root);
 
-            // ----- Local Methods ----- \\
+            // ----- Local Method ----- \\
 
             bool DoRemoveNode(ConversationNode _root) {
                 foreach (ConversationNode _innerNode in _root.nodes) {
+
                     if (_innerNode == _node) {
                         ArrayUtility.Remove(ref _root.nodes, _innerNode);
                         return true;
@@ -321,6 +367,16 @@ namespace EnhancedFramework.ConversationSystem {
         }
         #endregion
 
+        #region Localization
+        #if LOCALIZATION_ENABLED
+        /// <inheritdoc cref="ILocalizable.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
+        public void GetLocalizationTables(Set<TableReference> _stringTables,  Set<TableReference> _assetTables) {
+            root.GetLocalizationTables(_stringTables, _assetTables);
+            settings.GetLocalizationTables(_stringTables, _assetTables);
+        }
+        #endif
+        #endregion
+
         #region Utility
         /// <summary>
         /// Get this conversation <see cref="ConversationSettings"/> type (<see cref="ConversationPlayer{T}"/>-related).
@@ -338,45 +394,6 @@ namespace EnhancedFramework.ConversationSystem {
 
             return null;
         }
-
-        #if LOCALIZATION_ENABLED
-        /// <summary>
-        /// Get all localization <see cref="TableReference"/> used in this conversation.
-        /// </summary>
-        /// <param name="_stringTables"><see cref="StringTable"/> references collection to fill.</param>
-        /// <param name="_assetTables"><see cref="AssetTable"/> references collection to fill.</param>
-        public void GetLocalizationTables(Set<TableReference> _stringTables,  Set<TableReference> _assetTables) {
-            root.GetLocalizationTables(_stringTables, _assetTables);
-        }
-        #endif
-        #endregion
-
-        #region Editor Utility
-        #if UNITY_EDITOR
-        private void Awake() {
-            // Root conversation setup.
-            root.conversation = this;
-
-            RefreshValues();
-        }
-
-        private void OnValidate() {
-            RefreshValues();
-        }
-
-        // -----------------------
-
-        private void RefreshValues() {
-            if (Application.isPlaying) {
-                return;
-            }
-
-            // Settings type update.
-            if (GetSettingsType(PlayerType) != settings.GetType()) {
-                PlayerType = playerType;
-            }
-        }
-        #endif
         #endregion
     }
 }

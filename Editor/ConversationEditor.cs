@@ -1,13 +1,13 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
 using EnhancedEditor.Editor;
 using UnityEditor;
 
-namespace EnhancedFramework.ConversationSystem.Editor {
+namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
     /// Custom <see cref="Conversation"/> editor, used to draw various parameters from the <see cref="ConversationEditorWindow"/>.
     /// </summary>

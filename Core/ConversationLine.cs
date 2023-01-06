@@ -1,8 +1,12 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
+
+#if LOCALIZATION_PACKAGE
+#define LOCALIZATION_ENABLED
+#endif
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
@@ -17,7 +21,7 @@ using UnityEngine.Localization.Tables;
 using DisplayName = EnhancedEditor.DisplayNameAttribute;
 #endif
 
-namespace EnhancedFramework.ConversationSystem {
+namespace EnhancedFramework.Conversations {
     /// <summary>
     /// Base <see cref="ConversationNode"/> line class.
     /// <br/> Inherit from this to create your own lines.
@@ -33,9 +37,7 @@ namespace EnhancedFramework.ConversationSystem {
 
         [Space(10f)]
 
-        /// <summary>
-        /// Index of this line speaker (from <see cref="ConversationSettings.GetSpeakerAt(int)"/>).
-        /// </summary>
+        [Tooltip("This line speaker")]
         [SerializeField, Enhanced, DisplayName("Speaker"), Popup("Speakers")] protected int speakerIndex = 0;
 
         #if UNITY_EDITOR
@@ -46,15 +48,18 @@ namespace EnhancedFramework.ConversationSystem {
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        /// <summary>
-        /// The required flags for this line to be available to play.
-        /// </summary>
+        [Tooltip("Required flags for this line to be available to play")]
         public FlagValueGroup RequiredFlags = new FlagValueGroup();
 
-        /// <summary>
-        /// The flags to be modified when this line is played.
-        /// </summary>
+        [Tooltip("Modified flags when this line is played")]
         public FlagValueGroup AfterFlags = new FlagValueGroup();
+
+        /// <summary>
+        /// The duration of this line (in seconds).
+        /// </summary>
+        public virtual float Duration {
+            get { return 0f; }
+        }
 
         // -----------------------
 
@@ -103,19 +108,15 @@ namespace EnhancedFramework.ConversationSystem {
     [Serializable, DisplayName("Text Line")]
     public class ConversationTextLine : ConversationLine<ConversationTextLine.Content> {
         /// <summary>
-        /// Wrapper for the <see cref="ConversationTextLine"/> node line content.
+        /// Wrapper for the <see cref="ConversationTextLine"/> line content.
         /// </summary>
         [Serializable]
         public class Content {
             #region Content
-            /// <summary>
-            /// The string text of this line
-            /// </summary>
+            [Tooltip("Text of this line")]
             [Enhanced, EnhancedTextArea(true)] public string Text = DefaultText;
 
-            /// <summary>
-            /// The audio file of this line.
-            /// </summary>
+            [Tooltip("Audio file of this line")]
             public AudioClip Audio = null;
             #endregion
         }
@@ -126,10 +127,7 @@ namespace EnhancedFramework.ConversationSystem {
             set { Line.Text = value; }
         }
 
-        /// <summary>
-        /// The duration (in seconds) of this line.
-        /// </summary>
-        public virtual float Duration {
+        public override float Duration {
             get {
                 return Line.Audio.IsValid()
                      ? Line.Audio.length
@@ -146,19 +144,15 @@ namespace EnhancedFramework.ConversationSystem {
     [Serializable, DisplayName("Localized Line")]
     public class ConversationLocalizedLine : ConversationLine<ConversationLocalizedLine.Content> {
         /// <summary>
-        /// Wrapper for the <see cref="ConversationLocalizedLine"/> node line content.
+        /// Wrapper for the <see cref="ConversationLocalizedLine"/> line content.
         /// </summary>
         [Serializable]
         public class Content {
             #region Content
-            /// <summary>
-            /// The localized text of this line.
-            /// </summary>
+            [Tooltip("Localized text of this line")]
             public LocalizedString Text = new LocalizedString();
 
-            /// <summary>
-            /// The localized audio file of this line.
-            /// </summary>
+            [Tooltip("Localized audio of this line")]
             public LocalizedAsset<AudioClip> Audio = new LocalizedAsset<AudioClip>();
             #endregion
         }
@@ -169,10 +163,7 @@ namespace EnhancedFramework.ConversationSystem {
             set { Line.Text.SetLocalizedValue(value); }
         }
 
-        /// <summary>
-        /// The duration (in seconds) of this line.
-        /// </summary>
-        public virtual float Duration {
+        public override float Duration {
             get {
                 if (GetAudioFile(out AudioClip _audio) && _audio.IsValid()) {
                     return _audio.length;

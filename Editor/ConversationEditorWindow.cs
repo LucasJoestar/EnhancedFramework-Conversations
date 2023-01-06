@@ -1,9 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
-
+// ================================================================================================ //
 using EnhancedEditor;
 using EnhancedEditor.Editor;
 using System;
@@ -18,9 +17,9 @@ using UnityEngine;
 using ArrayUtility = EnhancedEditor.ArrayUtility;
 using Object = UnityEngine.Object;
 
-namespace EnhancedFramework.ConversationSystem.Editor {
+namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
-    /// Editor window used to edit <see cref="Dialogues.Conversation"/> assets.
+    /// Editor window used to edit <see cref="Conversations.Conversation"/> assets.
     /// <para/>
     /// This is where the game writers and designers can write and configure the dialogues to be used in the game.
     /// </summary>
@@ -189,7 +188,7 @@ namespace EnhancedFramework.ConversationSystem.Editor {
         private const string FileExtension = "asset";
 
         private const string NewFileTitle = "Create New Conversation";
-        private const string NewFileDefaultName = Conversation.Prefix + "NewConversation";
+        private const string NewFileDefaultName = Conversation.FilePrefix + "NewConversation";
         private const string NewFileMessage = "Please select a valid path to create a new conversation";
 
         private readonly GUIContent speakerColorHeaderGUI = new GUIContent("Speaker Color", "Edit the colors used to display the line of each speaker.");

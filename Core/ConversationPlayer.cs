@@ -1,8 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
 using EnhancedEditor;
 using System;
@@ -10,9 +10,9 @@ using UnityEngine;
 
 using Random = UnityEngine.Random;
 
-namespace EnhancedFramework.ConversationSystem {
+namespace EnhancedFramework.Conversations {
     /// <summary>
-    /// Base class used to play a <see cref="ConversationSystem.Conversation"/>.
+    /// Base class used to play a <see cref="Conversations.Conversation"/>.
     /// <br/>Non-generic global version of <see cref="ConversationPlayer{T}"/>.
     /// <para/>
     /// Should never be directly inherited from, always prefer using <see cref="ConversationPlayer{T}"/> instead.
@@ -21,12 +21,12 @@ namespace EnhancedFramework.ConversationSystem {
     public abstract class ConversationPlayer {
         #region Global Members
         /// <summary>
-        /// The playing <see cref="ConversationSystem.Conversation"/>.
+        /// The playing <see cref="Conversations.Conversation"/>.
         /// </summary>
         public Conversation Conversation = null;
 
         /// <summary>
-        /// The currently playing <see cref="ConversationNode"/>.
+        /// Currently playing <see cref="ConversationNode"/>.
         /// </summary>
         public ConversationNode CurrentNode = null;
 
@@ -36,13 +36,15 @@ namespace EnhancedFramework.ConversationSystem {
         public bool IsPlaying { get; private set; } = false;
 
         /// <summary>
-        /// The name of this player <see cref="Conversation"/>.
+        /// Name of this player <see cref="Conversations.Conversation"/>.
         /// </summary>
         public string Name {
             get { return Conversation.name; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <summary>
         /// Prevents inheriting from this class in other assemblies.
@@ -57,9 +59,9 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// Setups this player with the <see cref="ConversationSystem.Conversation"/> to play.
+        /// Setups this player with the <see cref="Conversations.Conversation"/> to play.
         /// </summary>
-        /// <param name="_conversation">The <see cref="ConversationSystem.Conversation"/> to play</param>
+        /// <param name="_conversation">The <see cref="Conversations.Conversation"/> to play</param>
         /// <param name="_currentNode">The first <see cref="ConversationNode"/> to play.</param>
         public virtual void Setup(Conversation _conversation, ConversationNode _currentNode) {
             Conversation = _conversation;
@@ -72,7 +74,7 @@ namespace EnhancedFramework.ConversationSystem {
         /// <summary>
         /// Stop playing the conversation.
         /// </summary>
-        /// <param name="_onNodeQuit">Delegate to be called once the current node has been quit.</param>
+        /// <param name="_onNodeQuit">Delegate to be called once the current node was quit.</param>
         public void Close(Action _onNodeQuit = null) {
             if (!IsPlaying) {
                 _onNodeQuit?.Invoke();
@@ -86,7 +88,7 @@ namespace EnhancedFramework.ConversationSystem {
         // -----------------------
 
         /// <summary>
-        /// Called once this player has been setup.
+        /// Called once this player is setup.
         /// <para/>
         /// By default, plays the first node of this player.
         /// <br/> Use this to update the game current state and interface.
@@ -116,7 +118,7 @@ namespace EnhancedFramework.ConversationSystem {
         }
 
         /// <summary>
-        /// Quit the current node and play new one.
+        /// Quit the current node and play the next one.
         /// <para/>
         /// Override this to implement a specific behaviour.
         /// </summary>
@@ -186,11 +188,13 @@ namespace EnhancedFramework.ConversationSystem {
     public abstract class ConversationPlayer<T> : ConversationPlayer where T : ConversationSettings, new() {
         #region Global Members
         /// <summary>
-        /// The associated playing <see cref="Conversation"/> <see cref="ConversationSettings"/>.
+        /// The playing <see cref="Conversation"/> associated <see cref="ConversationSettings"/>.
         /// </summary>
         public T Settings = null;
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <summary>
         /// Prevents from creating new instances using the class constructor.
@@ -211,8 +215,9 @@ namespace EnhancedFramework.ConversationSystem {
         #region Behaviour
         protected override bool GetNextNode(out ConversationNode _next) {
             switch (Settings.NextNodeBehaviour) {
-                // Get first available node.
-                case GetNextNodeBehaviour.PlayFirst:
+
+                // Get the first available node.
+                case NextNodeBehaviour.PlayFirst:
                     for (int i = 0; i < CurrentNode.NodeCount; i++) {
                         _next = CurrentNode.GetNodeAt(i);
 
@@ -222,8 +227,8 @@ namespace EnhancedFramework.ConversationSystem {
                     }
                     break;
 
-                // Get last available node.
-                case GetNextNodeBehaviour.PlayLast:
+                // Get the last available node.
+                case NextNodeBehaviour.PlayLast:
                     for (int i = CurrentNode.NodeCount; i-- > 0;) {
                         _next = CurrentNode.GetNodeAt(i);
 
@@ -234,7 +239,7 @@ namespace EnhancedFramework.ConversationSystem {
                     break;
 
                 // Play a random node.
-                case GetNextNodeBehaviour.Random:
+                case NextNodeBehaviour.Random:
                     int _count = 0;
 
                     for (int i = CurrentNode.NodeCount; i-- > 0;) {

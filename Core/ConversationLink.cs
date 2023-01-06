@@ -1,31 +1,35 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
 using EnhancedEditor;
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.ConversationSystem {
+namespace EnhancedFramework.Conversations {
     /// <summary>
-    /// <see cref="ConversationNode"/> redirecting to another existing node.
+    /// <see cref="ConversationNode"/> used to redirect to another existing node.
     /// <br/> Use this to avoid duplicates.
     /// </summary>
     [Serializable, DisplayName("Link")]
     public class ConversationLink : ConversationNode {
         #region Global Members
         /// <summary>
-        /// Whether the link node content should be skipped or not.
+        /// Whether to skip the linked line content or not.
         /// </summary>
-        [Tooltip("Whether the linked line content should be skipped or not.")] public bool SkipNode = false;
+        [Tooltip("Whether to skip the linked line content or not")]
+        public bool SkipNode = false;
 
         /// <summary>
         /// This link redirection <see cref="ConversationNode"/>.
         /// </summary>
         public ConversationNode Link {
-            get { return (nodes.Length == 0) ? null : nodes[0]; }
+            get {
+                GetLink(out ConversationNode _link);
+                return _link;
+            }
             set {
                 SetLink(value);
             }
@@ -203,7 +207,7 @@ namespace EnhancedFramework.ConversationSystem {
 
             return 1;
 
-            // ----- Local Methods ----- \\
+            // ----- Local Method ----- \\
 
             void PasteLink() {
                 SetLink(ConversationNodeUtility.CopyBuffer);

@@ -1,14 +1,17 @@
 {
-    "name": "EnhancedFramework.ConversationSystem",
-    "rootNamespace": "EnhancedFramework.ConversationSystem",
+    "name": "EnhancedFramework.Conversations.Editor",
+    "rootNamespace": "EnhancedFramework.Conversations.Editor",
     "references": [
         "EnhancedEditor",
+        "EnhancedEditor.Editor",
+        "EnhancedFramework.Conversations",
         "EnhancedFramework.Core",
-        "EnhancedFramework.Localization",
         "Unity.Localization",
-        "Unity.ResourceManager"
+        "Unity.Localization.Editor"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

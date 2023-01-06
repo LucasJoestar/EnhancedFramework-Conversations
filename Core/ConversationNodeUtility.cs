@@ -1,17 +1,17 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-ConversationSystem ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
 // 
 // Notes:
 //
-// ===================================================================================================== //
+// ================================================================================================ //
 
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("EnhancedFramework.ConversationSystem.Editor")]
-namespace EnhancedFramework.ConversationSystem {
+[assembly: InternalsVisibleTo("EnhancedFramework.Conversations.Editor")]
+namespace EnhancedFramework.Conversations {
     /// <summary>
-    /// Contains multiple <see cref="ConversationNode"/> utilties,
-    /// to make the connection between the editor and the runtime system.
+    /// Contains multiple <see cref="ConversationNode"/>-related utilties,
+    /// making connections between the editor and the runtime system.
     /// </summary>
     public static class ConversationNodeUtility {
         #region Content
@@ -20,7 +20,7 @@ namespace EnhancedFramework.ConversationSystem {
         #endif
 
         /// <summary>
-        /// Clipboard buffer for a <see cref="ConversationNode"/> reference (for editor only).
+        /// Clipboard buffer for a <see cref="ConversationNode"/> reference (editor only).
         /// </summary>
         public static ConversationNode CopyBuffer {
             get {
