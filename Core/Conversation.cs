@@ -132,7 +132,7 @@ namespace EnhancedFramework.Conversations {
         }
 
         private void CancelPlay() {
-            Delayer.CancelCall(DelayerID);
+            Delayer.Cancel(DelayerID);
         }
         #endregion
     }
@@ -270,6 +270,20 @@ namespace EnhancedFramework.Conversations {
                 return false;
             }
         }
+
+        // -------------------------------------------
+        // Events
+        // -------------------------------------------
+
+        /// <summary>
+        /// Called whenver this <see cref="Conversation"/> starts being played.
+        /// </summary>
+        public Action<Conversation, ConversationPlayer> OnPlayed = null;
+
+        /// <summary>
+        /// Called whenever this <see cref="Conversation"/> is being closed.
+        /// </summary>
+        public Action<Conversation, ConversationPlayer> OnClosed = null;
         #endregion
 
         #region Scriptable Object
@@ -296,6 +310,8 @@ namespace EnhancedFramework.Conversations {
             if (GetSettingsType(PlayerType) != settings.GetType()) {
                 PlayerType = playerType;
             }
+
+            ResetNodes();
         }
         #endif
         #endregion
@@ -331,39 +347,143 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <param name="_node">The <see cref="ConversationNode"/> to remove.</param>
         public void RemoveNode(ConversationNode _node) {
-            DoRemoveNode(root);
+            if (FindNode(_node, out ConversationNode _root)) {
+                ArrayUtility.Remove(ref _root.nodes, _node);
+            }
+        }
+
+        /// <summary>
+        /// Finds the <see cref="ConversationNode"/> matching a given guid.
+        /// </summary>
+        /// <param name="_guid">GUID to find matching node.</param>
+        /// <param name="_node">Found node matching the given guid (null if none).</param>
+        /// <returns>True if a node matching the given guid was successfully found, false otherwise.</returns>
+        public bool FindNode(int _guid, out ConversationNode _node) {
+            return DoFindNode(root, out _node);
 
             // ----- Local Method ----- \\
 
-            bool DoRemoveNode(ConversationNode _root) {
+            bool DoFindNode(ConversationNode _root, out ConversationNode _doNode) {
                 foreach (ConversationNode _innerNode in _root.nodes) {
 
-                    if (_innerNode == _node) {
-                        ArrayUtility.Remove(ref _root.nodes, _innerNode);
+                    if (_innerNode.Guid == _guid) {
+                        _doNode = _innerNode;
                         return true;
                     }
 
-                    if (DoRemoveNode(_innerNode)) {
+                    if (DoFindNode(_innerNode, out _doNode)) {
                         return true;
                     }
                 }
 
+                _doNode = null;
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Finds a given <see cref="ConversationNode"/> with its root node.
+        /// </summary>
+        /// <param name="_node">The node to find.</param>
+        /// <param name="_root">Root of the given node (null if not found).</param>
+        /// <returns>True if the given node was successfully found, false otherwise.</returns>
+        public bool FindNode(ConversationNode _node, out ConversationNode _root) {
+            return DoFindNode(root, out _root);
+
+            // ----- Local Method ----- \\
+
+            bool DoFindNode(ConversationNode _root, out ConversationNode _doRoot) {
+                foreach (ConversationNode _innerNode in _root.nodes) {
+
+                    if (_innerNode == _node) {
+                        _doRoot = _root;
+                        return true;
+                    }
+
+                    if (DoFindNode(_innerNode, out _doRoot)) {
+                        return true;
+                    }
+                }
+
+                _doRoot = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Resets all nodes. Called to clear behaviour when exiting play mode.
+        /// </summary>
+        public void ResetNodes() {
+            DoResetNode(root);
+
+            // ----- Local Method ----- \\
+
+            void DoResetNode(ConversationNode _root) {
+                _root.Reset();
+
+                foreach (ConversationNode _innerNode in _root.nodes) {
+                    DoResetNode(_innerNode);
+                }
             }
         }
         #endregion
 
         #region Behaviour
+        private ConversationPlayer player = null;
+
+        // -----------------------
+
+        /// <inheritdoc cref="CreatePlayer(ConversationNode)"/>
+        public ConversationPlayer CreatePlayer() {
+            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player.Setup(this);
+
+            // Event.
+            OnPlayed?.Invoke(this, player);
+
+            return player;
+        }
+
         /// <summary>
         /// Creates and setup a new <see cref="ConversationPlayer"/> for this conversation.
         /// <br/> Use this to play its content.
         /// </summary>
+        /// <param name="_currentNode">First node to play.</param>
         /// <returns>The newly created <see cref="ConversationPlayer"/> to play this conversation.</returns>
-        public ConversationPlayer CreatePlayer() {
-            var _player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
-            _player.Setup(this);
+        public ConversationPlayer CreatePlayer(ConversationNode _currentNode) {
+            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player.Setup(this, _currentNode);
 
-            return _player;
+            // Event.
+            OnPlayed?.Invoke(this, player);
+
+            return player;
+        }
+
+        /// <summary>
+        /// Closes the last created <see cref="ConversationPlayer"/> for this conversation.
+        /// </summary>
+        /// <returns>True if the player could be successfully closed, false otherwise.</returns>
+        public bool ClosePlayer() {
+            if (player != null) {
+                player.Close();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Called when a <see cref="ConversationPlayer"/> of this conversation is closed.
+        /// </summary>
+        /// <param name="_player">The <see cref="ConversationPlayer"/> being closed.</param>
+        internal void OnPlayerClosed(ConversationPlayer _player) {
+            if (player == _player) {
+                player = null;
+
+                // Event.
+                OnClosed?.Invoke(this, _player);
+            }
         }
         #endregion
 

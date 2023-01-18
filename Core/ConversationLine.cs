@@ -40,6 +40,9 @@ namespace EnhancedFramework.Conversations {
         [Tooltip("This line speaker")]
         [SerializeField, Enhanced, DisplayName("Speaker"), Popup("Speakers")] protected int speakerIndex = 0;
 
+        [Tooltip("Allow this line to only be played once")]
+        [SerializeField] protected bool onlyOnce = false;
+
         #if UNITY_EDITOR
         [Space(15f)]
 
@@ -53,6 +56,10 @@ namespace EnhancedFramework.Conversations {
 
         [Tooltip("Modified flags when this line is played")]
         public FlagValueGroup AfterFlags = new FlagValueGroup();
+
+        // -----------------------
+
+        [NonSerialized] private bool isAvailable = true;
 
         /// <summary>
         /// The duration of this line (in seconds).
@@ -68,13 +75,17 @@ namespace EnhancedFramework.Conversations {
         }
 
         public override bool IsAvailable {
-            get { return RequiredFlags.IsValid(); }
+            get { return isAvailable && RequiredFlags.IsValid(); }
         }
         #endregion
 
         #region Behaviour
         public override void Play(ConversationPlayer _player) {
             base.Play(_player);
+
+            if (onlyOnce) {
+                isAvailable = false;
+            }
 
             // Update flag values on play (safer than on exit).
             AfterFlags.SetValues();
@@ -174,16 +185,7 @@ namespace EnhancedFramework.Conversations {
         }
         #endregion
 
-        #region Utility
-        /// <summary>
-        /// Get this line audio asset.
-        /// </summary>
-        /// <param name="_audio">This line audio asset.</param>
-        /// <returns>True if an audio asset was successfully found and loaded, false otherwise.</returns>
-        public bool GetAudioFile(out AudioClip _audio) {
-            return Line.Audio.GetLocalizedValue(out _audio);
-        }
-
+        #region Localization
         #if LOCALIZATION_ENABLED
         public override void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables) {
             base.GetLocalizationTables(_stringTables, _assetTables);
@@ -198,6 +200,17 @@ namespace EnhancedFramework.Conversations {
             }
         }
         #endif
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get this line audio asset.
+        /// </summary>
+        /// <param name="_audio">This line audio asset.</param>
+        /// <returns>True if an audio asset was successfully found and loaded, false otherwise.</returns>
+        public bool GetAudioFile(out AudioClip _audio) {
+            return Line.Audio.GetLocalizedValue(out _audio);
+        }
         #endregion
     }
     #endif

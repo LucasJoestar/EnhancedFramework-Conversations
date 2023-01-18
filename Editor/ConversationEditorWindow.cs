@@ -3,6 +3,7 @@
 // Notes:
 //
 // ================================================================================================ //
+
 using EnhancedEditor;
 using EnhancedEditor.Editor;
 using System;
@@ -180,6 +181,8 @@ namespace EnhancedFramework.Conversations.Editor {
         private const float IconSpacing = 5f;
         private const float DotFoldoutSpacing = 6f;
 
+        private const double DragMinTime = .2d;
+
         private const float MaxLabelWidth = 350f;
         private const string ElapsedLabelSymbol = " <b>[...]</b>";
         private const string DisplayedLabelSpeakerFormat = "<color=#{0}>{1}</color>";
@@ -201,6 +204,7 @@ namespace EnhancedFramework.Conversations.Editor {
 
         private AnimBool configurationVisiblity = new AnimBool(false);
         private Rect dragPosition = Rect.zero;
+        private double dragTimer = 0d;
 
         private float NodeEditorWindowWidth {
             get { return position.width - ConfigurationSectionWindowWidth; }
@@ -283,6 +287,10 @@ namespace EnhancedFramework.Conversations.Editor {
                                            : DragAndDropVisualMode.None;
 
                     _event.Use();
+                }
+
+                if (_event.type == EventType.MouseDown) {
+                    dragTimer = EditorApplication.timeSinceStartup + DragMinTime;
                 }
 
                 dragPosition = Rect.zero;
@@ -631,7 +639,7 @@ namespace EnhancedFramework.Conversations.Editor {
             }
 
             // Special events.
-            if ((_event.type == EventType.MouseDrag) && (_event.button == 0)) {
+            if ((_event.type == EventType.MouseDrag) && (_event.button == 0) && (dragTimer < EditorApplication.timeSinceStartup)) {
                 GUI.FocusControl(string.Empty);
 
                 DragAndDrop.PrepareStartDrag();

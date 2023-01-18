@@ -9,11 +9,11 @@
 #endif
 
 using EnhancedFramework.Core;
-using EnhancedFramework.Localization;
 using System;
 using UnityEngine;
 
 #if LOCALIZATION_ENABLED
+using EnhancedFramework.Localization;
 using UnityEngine.Localization.Tables;
 #endif
 
@@ -81,6 +81,22 @@ namespace EnhancedFramework.Conversations {
 
         public override int SpeakerCount {
             get { return Speakers.Length; }
+        }
+        #endregion
+
+        #region Speaker
+        /// <summary>
+        /// Get the speaker of these settings at a specific index.
+        /// </summary>
+        /// <param name="_index">The index to the get the speaker at.</param>
+        /// <returns>The speaker at the given index.</returns>
+        public T GetSpeaker(int _index) {
+            return Speakers[_index];
+        }
+
+        public override string GetSpeakerAt(int _index) {
+            T _speaker = GetSpeaker(_index);
+            return (_speaker != null) ? _speaker.ToString() : ConversationNode.DefaultSpeakerName;
         }
         #endregion
     }

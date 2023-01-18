@@ -10,6 +10,8 @@ using EnhancedFramework.Core;
 using UnityEditor;
 using UnityEngine;
 
+using UMessageType = UnityEditor.MessageType;
+
 namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
     /// Custom <see cref="ConversationNode"/> drawer, used to display the class content when using the <see cref="SerializeReference"/> attribute.
@@ -17,7 +19,10 @@ namespace EnhancedFramework.Conversations.Editor {
     [CustomPropertyDrawer(typeof(ConversationNode), true)]
     public class ConversationNodePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
-        private const float Margins = 4f;
+        private const float Margins = 7f;
+        private const UMessageType MessageType = UMessageType.Info;
+
+        private static readonly MemberValue<string> MessageMember = new MemberValue<string>("Description");
 
         // -----------------------
 
@@ -47,6 +52,14 @@ namespace EnhancedFramework.Conversations.Editor {
             EnhancedEditorGUI.Section(_position, EnhancedEditorGUIUtility.GetLabelGUI(_section));
 
             IncreasePosition(Margins);
+
+            if (MessageMember.GetValue(_property, out string _message) && !string.IsNullOrEmpty(_message)) {
+
+                _position.height = EnhancedEditorGUIUtility.GetHelpBoxHeight(_message, MessageType, _position.width);
+                EditorGUI.HelpBox(_position, _message, MessageType);
+
+                IncreasePosition(5f);
+            }
 
             while (_current.Next(false) && !SerializedProperty.EqualContents(_current, _next)) {
                 if (!SerializedProperty.EqualContents(_current, _nextVisible)) {

@@ -1,0 +1,19 @@
+{
+    "name": "EnhancedFramework.Conversations.PlayMaker",
+    "rootNamespace": "EnhancedFramework.Conversations.PlayMaker",
+    "references": [
+        "EnhancedFramework.Conversations",
+        "EnhancedFramework.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "PLAYMAKER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

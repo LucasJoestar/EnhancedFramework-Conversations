@@ -10,11 +10,11 @@
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
-using EnhancedFramework.Localization;
 using System;
 using UnityEngine;
 
 #if LOCALIZATION_ENABLED
+using EnhancedFramework.Localization;
 using UnityEngine.Localization.Tables;
 #endif
 
@@ -99,6 +99,13 @@ namespace EnhancedFramework.Conversations {
         }
 
         // -----------------------
+
+        /// <summary>
+        /// Short description of this node, displayed on top of the inspector.
+        /// </summary>
+        public virtual string Description {
+            get { return string.Empty; }
+        }
 
         /// <summary>
         /// Default speaker name displayed for this node type (especially used in the editor).
@@ -214,6 +221,11 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
+        /// <summary>
+        /// Called to reset this node behaviour.
+        /// </summary>
+        internal protected virtual void Reset() { }
+
         /// <summary>
         /// Plays this <see cref="ConversationNode"/>.
         /// <para/>

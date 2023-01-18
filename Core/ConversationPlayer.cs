@@ -76,6 +76,8 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <param name="_onNodeQuit">Delegate to be called once the current node was quit.</param>
         public void Close(Action _onNodeQuit = null) {
+            _onNodeQuit += () => Conversation.OnPlayerClosed(this);
+
             if (!IsPlaying) {
                 _onNodeQuit?.Invoke();
                 return;
@@ -94,7 +96,7 @@ namespace EnhancedFramework.Conversations {
         /// <br/> Use this to update the game current state and interface.
         /// </summary>
         protected virtual void OnSetup() {
-            PlayNode(CurrentNode);
+            PlayCurrentNode();
         }
 
         /// <summary>
