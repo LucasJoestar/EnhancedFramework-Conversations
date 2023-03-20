@@ -117,7 +117,7 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
-        private static readonly int DelayerID = "ConversationDefaultPlayer".GetHashCode();
+        private DelayHandler delayedCall = default;
 
         // -----------------------
 
@@ -128,11 +128,11 @@ namespace EnhancedFramework.Conversations {
 
             // Use a delay before playing the next node,
             // avoiding infinite loops on referenced links.
-            Delayer.Call(DelayerID, .1f, PlayNextNode, false);
+            delayedCall = Delayer.Call(.1f, PlayNextNode, false);
         }
 
         private void CancelPlay() {
-            Delayer.Cancel(DelayerID);
+            delayedCall.Cancel();
         }
         #endregion
     }
@@ -160,7 +160,7 @@ namespace EnhancedFramework.Conversations {
     /// <see cref="ScriptableObject"/> database for a conversation.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "NewConversation", menuName = FrameworkUtility.MenuPath + "Conversation", order = FrameworkUtility.MenuOrder + 50)]
-    public class Conversation : ScriptableObject
+    public class Conversation : EnhancedScriptableObject
                                 #if LOCALIZATION_ENABLED
                                 , ILocalizable
                                 #endif
@@ -212,7 +212,7 @@ namespace EnhancedFramework.Conversations {
             set {
                 playerType.Type = value;
 
-                var _settings = Activator.CreateInstance(GetSettingsType(value));
+                var _settings = System.Activator.CreateInstance(GetSettingsType(value));
                 settings = EnhancedUtility.CopyObjectContent(settings, _settings) as ConversationSettings;
             }
         }
@@ -295,7 +295,9 @@ namespace EnhancedFramework.Conversations {
             RefreshValues();
         }
 
-        private void OnValidate() {
+        protected override void OnValidate() {
+            base.OnValidate();
+
             RefreshValues();
         }
 
@@ -316,7 +318,81 @@ namespace EnhancedFramework.Conversations {
         #endif
         #endregion
 
-        #region Node Management
+        #region Player
+        private ConversationPlayer player = null;
+
+        // -----------------------
+
+        /// <inheritdoc cref="CreatePlayer(ConversationNode)"/>
+        public ConversationPlayer CreatePlayer() {
+            player = System.Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player.Setup(this);
+
+            // Event.
+            OnPlayed?.Invoke(this, player);
+
+            return player;
+        }
+
+        /// <summary>
+        /// Creates and setup a new <see cref="ConversationPlayer"/> for this conversation.
+        /// <br/> Use this to play its content.
+        /// </summary>
+        /// <param name="_currentNode">First node to play.</param>
+        /// <returns>The newly created <see cref="ConversationPlayer"/> to play this conversation.</returns>
+        public ConversationPlayer CreatePlayer(ConversationNode _currentNode) {
+            player = System.Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player.Setup(this, _currentNode);
+
+            // Event.
+            OnPlayed?.Invoke(this, player);
+
+            return player;
+        }
+
+        /// <summary>
+        /// Closes the last created <see cref="ConversationPlayer"/> for this conversation.
+        /// </summary>
+        /// <returns>True if the player could be successfully closed, false otherwise.</returns>
+        public bool ClosePlayer() {
+            if (player != null) {
+                player.Close();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Called when a <see cref="ConversationPlayer"/> of this conversation is closed.
+        /// </summary>
+        /// <param name="_player">The <see cref="ConversationPlayer"/> being closed.</param>
+        internal void OnPlayerClosed(ConversationPlayer _player) {
+            if (player == _player) {
+                player = null;
+
+                // Event.
+                OnClosed?.Invoke(this, _player);
+            }
+        }
+
+        /// <summary>
+        /// Get this <see cref="Conversation"/> current active <see cref="ConversationPlayer"/>.
+        /// </summary>
+        /// <param name="_player">This conversation active <see cref="ConversationPlayer"/> (null if none).</param>
+        /// <returns>True if an active <see cref="ConversationPlayer"/> could be found, false otherwise.</returns>
+        public bool GetPlayer(out ConversationPlayer _player) {
+            if ((player != null) && player.IsPlaying) {
+                _player = player;
+                return true;
+            }
+
+            _player = null;
+            return false;
+        }
+        #endregion
+
+        #region Nodes
         /// <summary>
         /// Adds a new default node to this conversation, at a specific root node.
         /// </summary>
@@ -336,7 +412,7 @@ namespace EnhancedFramework.Conversations {
                 return null;
             }
 
-            ConversationNode _node = Activator.CreateInstance(_nodeType) as ConversationNode;
+            ConversationNode _node = System.Activator.CreateInstance(_nodeType) as ConversationNode;
             _root.AddNode(_node);
 
             return _node;
@@ -424,65 +500,6 @@ namespace EnhancedFramework.Conversations {
                 foreach (ConversationNode _innerNode in _root.nodes) {
                     DoResetNode(_innerNode);
                 }
-            }
-        }
-        #endregion
-
-        #region Behaviour
-        private ConversationPlayer player = null;
-
-        // -----------------------
-
-        /// <inheritdoc cref="CreatePlayer(ConversationNode)"/>
-        public ConversationPlayer CreatePlayer() {
-            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
-            player.Setup(this);
-
-            // Event.
-            OnPlayed?.Invoke(this, player);
-
-            return player;
-        }
-
-        /// <summary>
-        /// Creates and setup a new <see cref="ConversationPlayer"/> for this conversation.
-        /// <br/> Use this to play its content.
-        /// </summary>
-        /// <param name="_currentNode">First node to play.</param>
-        /// <returns>The newly created <see cref="ConversationPlayer"/> to play this conversation.</returns>
-        public ConversationPlayer CreatePlayer(ConversationNode _currentNode) {
-            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
-            player.Setup(this, _currentNode);
-
-            // Event.
-            OnPlayed?.Invoke(this, player);
-
-            return player;
-        }
-
-        /// <summary>
-        /// Closes the last created <see cref="ConversationPlayer"/> for this conversation.
-        /// </summary>
-        /// <returns>True if the player could be successfully closed, false otherwise.</returns>
-        public bool ClosePlayer() {
-            if (player != null) {
-                player.Close();
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Called when a <see cref="ConversationPlayer"/> of this conversation is closed.
-        /// </summary>
-        /// <param name="_player">The <see cref="ConversationPlayer"/> being closed.</param>
-        internal void OnPlayerClosed(ConversationPlayer _player) {
-            if (player == _player) {
-                player = null;
-
-                // Event.
-                OnClosed?.Invoke(this, _player);
             }
         }
         #endregion

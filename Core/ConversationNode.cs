@@ -131,6 +131,16 @@ namespace EnhancedFramework.Conversations {
         protected ConversationNode() { }
         #endregion
 
+        #region Operator
+        public static implicit operator int(ConversationNode _node) {
+            return _node.guid;
+        }
+
+        public override string ToString() {
+            return ((int)this).ToString();
+        }
+        #endregion
+
         #region Node Management
         /// <summary>
         /// Get this node connection at a specific index (<see cref="ConversationNode"/>).
@@ -164,7 +174,7 @@ namespace EnhancedFramework.Conversations {
 
                 for (int i = 0; i < nodes.Length; i++) {
                     ConversationNode _innerNode = _source.nodes[i];
-                    ConversationNode _new = Activator.CreateInstance(_innerNode.GetType()) as ConversationNode;
+                    ConversationNode _new = System.Activator.CreateInstance(_innerNode.GetType()) as ConversationNode;
 
                     nodes[i] = _new.CopyNode(_innerNode, _copyConnections);
                 }
@@ -192,7 +202,7 @@ namespace EnhancedFramework.Conversations {
 
             // Self.
             if (_doTransmuteSelf) {
-                var _new = Activator.CreateInstance(_type);
+                var _new = System.Activator.CreateInstance(_type);
                 ConversationNode _node = EnhancedUtility.CopyObjectContent(this, _new, true) as ConversationNode;
 
                 if (_node is ConversationLink _link) {

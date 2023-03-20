@@ -13,7 +13,7 @@ namespace EnhancedFramework.Conversations {
     /// <see cref="ConversationNode"/> used to redirect to another existing node.
     /// <br/> Use this to avoid duplicates.
     /// </summary>
-    [Serializable, DisplayName("Link")]
+    [Serializable, DisplayName("Base/Link")]
     public class ConversationLink : ConversationNode {
         #region Global Members
         /// <summary>

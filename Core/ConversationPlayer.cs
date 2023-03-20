@@ -6,7 +6,6 @@
 
 using EnhancedEditor;
 using System;
-using UnityEngine;
 
 using Random = UnityEngine.Random;
 
@@ -163,7 +162,7 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <param name="_next">The next <see cref="ConversationNode"/> to play.</param>
         /// <returns>True if a new node to play was successfully found, false otherwise.</returns>
-        protected abstract bool GetNextNode(out ConversationNode _next);
+        public abstract bool GetNextNode(out ConversationNode _next);
         #endregion
 
         #region Utility
@@ -215,7 +214,7 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
-        protected override bool GetNextNode(out ConversationNode _next) {
+        public override bool GetNextNode(out ConversationNode _next) {
             switch (Settings.NextNodeBehaviour) {
 
                 // Get the first available node.

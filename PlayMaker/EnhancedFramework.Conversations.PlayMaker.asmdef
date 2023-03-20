@@ -2,6 +2,7 @@
     "name": "EnhancedFramework.Conversations.PlayMaker",
     "rootNamespace": "EnhancedFramework.Conversations.PlayMaker",
     "references": [
+        "EnhancedEditor",
         "EnhancedFramework.Conversations",
         "EnhancedFramework.Core"
     ],

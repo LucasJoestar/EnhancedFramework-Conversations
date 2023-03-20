@@ -33,7 +33,7 @@ namespace EnhancedFramework.Conversations {
         /// <summary>
         /// This line content.
         /// </summary>
-        [Enhanced, Block] public T Line = Activator.CreateInstance<T>();
+        [Enhanced, Block] public T Line = System.Activator.CreateInstance<T>();
 
         [Space(10f)]
 
@@ -83,8 +83,17 @@ namespace EnhancedFramework.Conversations {
         public override void Play(ConversationPlayer _player) {
             base.Play(_player);
 
+            // Only once parameter.
             if (onlyOnce) {
-                isAvailable = false;
+
+                if (isAvailable) {
+                    isAvailable = false;
+                } else {
+
+                    // Automatically play the next node if already played.
+                    _player.PlayNextNode();
+                    return;
+                }
             }
 
             // Update flag values on play (safer than on exit).
@@ -116,7 +125,7 @@ namespace EnhancedFramework.Conversations {
     /// <summary>
     /// <see cref="ConversationLine{T}"/> node class with a single text and an associated audio file.
     /// </summary>
-    [Serializable, DisplayName("Text Line")]
+    [Serializable, DisplayName("Base/Line [Standard]")]
     public class ConversationTextLine : ConversationLine<ConversationTextLine.Content> {
         /// <summary>
         /// Wrapper for the <see cref="ConversationTextLine"/> line content.
@@ -152,7 +161,7 @@ namespace EnhancedFramework.Conversations {
     /// <summary>
     /// <see cref="ConversationLine{T}"/> node class with a localized text and an associated localized audio file.
     /// </summary>
-    [Serializable, DisplayName("Localized Line")]
+    [Serializable, DisplayName("Base/Line [Localized]")]
     public class ConversationLocalizedLine : ConversationLine<ConversationLocalizedLine.Content> {
         /// <summary>
         /// Wrapper for the <see cref="ConversationLocalizedLine"/> line content.

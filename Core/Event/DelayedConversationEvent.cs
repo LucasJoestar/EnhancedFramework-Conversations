@@ -30,8 +30,7 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
-        private static readonly int DelayID = "DelayedConversationEvent".GetHashCode();
-        private static bool isDelay = false;
+        private DelayHandler delayedCall = default;
 
         // -----------------------
 
@@ -41,19 +40,15 @@ namespace EnhancedFramework.Conversations {
                 OnPlayed(_player);
             } else {
                 // Delay.
-                Delayer.Call(DelayID, Delay, () => OnPlayed(_player), false);
-                isDelay = true;
+                delayedCall = Delayer.Call(Delay, () => OnPlayed(_player), false);
             }
 
             return true;
         }
 
         protected override bool OnStop(ConversationPlayer _player, bool _isClosingConversation, Action _onComplete) {
-            // Complete all calls.
-            if (isDelay) {
-                Delayer.CompleteAll(DelayID);
-                isDelay = false;
-            }
+            // Complete call.
+            delayedCall.Complete();
 
             return base.OnStop(_player, _isClosingConversation, _onComplete);
         }
