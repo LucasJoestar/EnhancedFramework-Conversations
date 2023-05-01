@@ -176,7 +176,8 @@ namespace EnhancedFramework.Conversations {
                                                                                                                                        #if LOCALIZATION_ENABLED
                                                                                                                                        typeof(ConversationLocalizedLine),
                                                                                                                                        #endif
-                                                                                                                                       typeof(ConversationLink));
+                                                                                                                                       typeof(ConversationLink),
+                                                                                                                                       typeof(ConversationResetNode));
 
         [Tooltip("Node type to be used when creating a new link in this conversation")]
         [SerializeField, DisplayName("Default Link")]
@@ -212,7 +213,7 @@ namespace EnhancedFramework.Conversations {
             set {
                 playerType.Type = value;
 
-                var _settings = System.Activator.CreateInstance(GetSettingsType(value));
+                var _settings = Activator.CreateInstance(GetSettingsType(value));
                 settings = EnhancedUtility.CopyObjectContent(settings, _settings) as ConversationSettings;
             }
         }
@@ -222,6 +223,8 @@ namespace EnhancedFramework.Conversations {
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
         [SerializeReference, Enhanced, Block] protected ConversationSettings settings = new ConversationDefaultSettings();
+
+        private static string[] speakers = new string[0];
 
         /// <summary>
         /// <see cref="ConversationPlayer"/>-related settings of this conversation.
@@ -236,12 +239,39 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         public string[] Speakers {
             get {
-                string[] _speakers = new string[settings.SpeakerCount];
-                for (int i = 0; i < _speakers.Length; i++) {
-                    _speakers[i] = settings.GetSpeakerAt(i);
+
+                int _count = settings.SpeakerCount;
+                if (speakers.Length != _count) {
+                    Array.Resize(ref speakers, _count);
                 }
 
-                return _speakers;
+                for (int i = 0; i < speakers.Length; i++) {
+                    speakers[i] = $"{settings.GetSpeakerAt(i)} [{i + 1}]";
+                }
+
+                return speakers;
+            }
+        }
+
+        /// <summary>
+        /// Get if there exist any duplicate speaker name in this conversation.
+        /// </summary>
+        public bool HasDuplicateName {
+            get {
+
+                string[] _speakers = Speakers;
+                for (int i = 0; i < _speakers.Length; i++) {
+
+                    string _speaker = _speakers[i];
+                    for (int j = i + 1; j < _speakers.Length; j++) {
+
+                        if (_speakers[j] == _speaker) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -469,11 +499,16 @@ namespace EnhancedFramework.Conversations {
             // ----- Local Method ----- \\
 
             bool DoFindNode(ConversationNode _root, out ConversationNode _doRoot) {
+
                 foreach (ConversationNode _innerNode in _root.nodes) {
 
                     if (_innerNode == _node) {
                         _doRoot = _root;
                         return true;
+                    }
+
+                    if (!_root.ShowNodes) {
+                        continue;
                     }
 
                     if (DoFindNode(_innerNode, out _doRoot)) {
@@ -496,6 +531,10 @@ namespace EnhancedFramework.Conversations {
 
             void DoResetNode(ConversationNode _root) {
                 _root.Reset();
+
+                if (!_root.ShowNodes) {
+                    return;
+                }
 
                 foreach (ConversationNode _innerNode in _root.nodes) {
                     DoResetNode(_innerNode);

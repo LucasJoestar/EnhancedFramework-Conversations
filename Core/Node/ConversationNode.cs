@@ -255,6 +255,14 @@ namespace EnhancedFramework.Conversations {
         public virtual void Quit(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
             _onQuit?.Invoke();
         }
+
+        /// <summary>
+        /// Skips this node content.
+        /// </summary>
+        /// <param name="_player"><inheritdoc cref="Doc(Conversation, ConversationSettings, ConversationPlayer)" path="/param[@name='_player']"/></param>
+        public virtual void Skip(ConversationPlayer _player) {
+            _player.PlayNextNode();
+        }
         #endregion
 
         #region Localization

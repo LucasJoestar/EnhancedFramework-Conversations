@@ -43,7 +43,7 @@ namespace EnhancedFramework.Conversations.Editor {
         /// <br/> Creates and shows a new instance if there is none.
         /// </summary>
         /// <returns><see cref="ConversationEditorWindow"/> instance on screen.</returns>
-        [MenuItem("Tools/Enhanced Framework/Conversation Editor", false, 15)]
+        [MenuItem(FrameworkUtility.MenuItemPath + "Conversation Editor", false, 10)]
         public static ConversationEditorWindow GetWindow() {
             ConversationEditorWindow _window = GetWindow<ConversationEditorWindow>("Conversation Editor");
             _window.Show();
@@ -84,6 +84,7 @@ namespace EnhancedFramework.Conversations.Editor {
         [SerializeField] private string conversationPath = string.Empty;
 
         [SerializeField] private Pair<string, Color>[] speakerColors = new Pair<string, Color>[] { };
+        [SerializeField] private Color defaultSpeakerColor = new Color(.9f, .9f, .9f);
         [SerializeField] private Vector2 scroll = Vector2.zero;
         [SerializeField] private bool useGrid = false;
 
@@ -372,6 +373,22 @@ namespace EnhancedFramework.Conversations.Editor {
 
                             GUILayout.Space(10f);
 
+                            // Default speaker.
+                            using (var _horizontal = new GUILayout.HorizontalScope()) {
+
+                                EditorGUILayout.PrefixLabel("Default Speaker");
+
+                                using (var _changeCheck = new EditorGUI.ChangeCheckScope()) {
+                                    defaultSpeakerColor = EditorGUILayout.ColorField(defaultSpeakerColor);
+
+                                    if (_changeCheck.changed) {
+                                        Repaint();
+                                    }
+                                }
+                            }
+
+                            GUILayout.Space(10f);
+
                             // Add speaker color button.
                             using (var _buttonScope = new EditorGUILayout.HorizontalScope()) {
                                 GUILayout.FlexibleSpace();
@@ -553,14 +570,17 @@ namespace EnhancedFramework.Conversations.Editor {
 
             // Configured speaker color.
             string _speaker = _node.GetEditorSpeakerName(conversation.Settings);
-            if (!string.IsNullOrEmpty(_speaker)) {
-                int _speakerIndex = Array.FindIndex(speakerColors, (p) => p.First == _speaker);
+            int _speakerIndex = string.IsNullOrEmpty(_speaker) ? -1 : _speakerIndex = Array.FindIndex(speakerColors, (p) => p.First == _speaker);
 
-                if (_speakerIndex != -1) {
-                    _displayedText = string.Format(DisplayedLabelSpeakerFormat, ColorUtility.ToHtmlStringRGBA(speakerColors[_speakerIndex].Second), _displayedText);
-                }
+            Color _color = (_speakerIndex == -1) ? defaultSpeakerColor : speakerColors[_speakerIndex].Second;
+
+            if ((_speakerIndex == -1) || conversation.HasDuplicateName) {
+                _color *= ((_node.SpeakerIndex % 2) != 0) ? Color.white : new Color(.75f, .75f, .75f);
             }
 
+            _displayedText = string.Format(DisplayedLabelSpeakerFormat, ColorUtility.ToHtmlStringRGBA(_color), _displayedText);
+
+            // Content.
             Vector2 _size = _style.CalcSize(EnhancedEditorGUIUtility.GetLabelGUI(_displayedText));
             float _maxWidth = Mathf.Min(MaxLabelWidth, _position.width);
 

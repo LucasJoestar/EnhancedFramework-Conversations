@@ -33,7 +33,7 @@ namespace EnhancedFramework.Conversations {
         /// <summary>
         /// This line content.
         /// </summary>
-        [Enhanced, Block] public T Line = System.Activator.CreateInstance<T>();
+        [Enhanced, Block] public T Line = Activator.CreateInstance<T>();
 
         [Space(10f)]
 
@@ -59,7 +59,7 @@ namespace EnhancedFramework.Conversations {
 
         // -----------------------
 
-        [NonSerialized] private bool isAvailable = true;
+        [NonSerialized] private bool wasPlayed = false;
 
         /// <summary>
         /// The duration of this line (in seconds).
@@ -75,7 +75,13 @@ namespace EnhancedFramework.Conversations {
         }
 
         public override bool IsAvailable {
-            get { return isAvailable && RequiredFlags.IsValid(); }
+            get {
+                if (onlyOnce && wasPlayed) {
+                    return false;
+                }
+
+                return RequiredFlags.Valid;
+            }
         }
         #endregion
 
@@ -83,21 +89,22 @@ namespace EnhancedFramework.Conversations {
         public override void Play(ConversationPlayer _player) {
             base.Play(_player);
 
-            // Only once parameter.
-            if (onlyOnce) {
+            // Automatically play the next node if already played.
+            if (onlyOnce && wasPlayed) {
 
-                if (isAvailable) {
-                    isAvailable = false;
-                } else {
-
-                    // Automatically play the next node if already played.
-                    _player.PlayNextNode();
-                    return;
-                }
+                _player.PlayNextNode();
+                return;
             }
 
             // Update flag values on play (safer than on exit).
             AfterFlags.SetValues();
+            wasPlayed = true;
+        }
+
+        protected internal override void Reset() {
+            base.Reset();
+
+            wasPlayed = false;
         }
         #endregion
 
@@ -136,8 +143,8 @@ namespace EnhancedFramework.Conversations {
             [Tooltip("Text of this line")]
             [Enhanced, EnhancedTextArea(true)] public string Text = DefaultText;
 
-            [Tooltip("Audio file of this line")]
-            public AudioClip Audio = null;
+            [Tooltip("Audio asset of this line")]
+            public AudioAsset Audio = null;
             #endregion
         }
 
@@ -150,7 +157,7 @@ namespace EnhancedFramework.Conversations {
         public override float Duration {
             get {
                 return Line.Audio.IsValid()
-                     ? Line.Audio.length
+                     ? Line.Audio.Duration
                      : (Text.Length * .05f);
             }
         }
@@ -173,7 +180,7 @@ namespace EnhancedFramework.Conversations {
             public LocalizedString Text = new LocalizedString();
 
             [Tooltip("Localized audio of this line")]
-            public LocalizedAsset<AudioClip> Audio = new LocalizedAsset<AudioClip>();
+            public LocalizedAsset<AudioAsset> Audio = new LocalizedAsset<AudioAsset>();
             #endregion
         }
 
@@ -185,8 +192,8 @@ namespace EnhancedFramework.Conversations {
 
         public override float Duration {
             get {
-                if (GetAudioFile(out AudioClip _audio) && _audio.IsValid()) {
-                    return _audio.length;
+                if (GetAudioFile(out AudioAsset _audio) && _audio.IsValid()) {
+                    return _audio.Duration;
                 }
 
                 return Text.Length * .05f;
@@ -217,7 +224,7 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <param name="_audio">This line audio asset.</param>
         /// <returns>True if an audio asset was successfully found and loaded, false otherwise.</returns>
-        public bool GetAudioFile(out AudioClip _audio) {
+        public bool GetAudioFile(out AudioAsset _audio) {
             return Line.Audio.GetLocalizedValue(out _audio);
         }
         #endregion

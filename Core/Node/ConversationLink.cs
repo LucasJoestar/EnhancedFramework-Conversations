@@ -149,18 +149,13 @@ namespace EnhancedFramework.Conversations {
         #region Behaviour
         public override void Play(ConversationPlayer _player) {
             if (SkipNode) {
-                _player.PlayNextNode();
+                Link.Skip(_player);
             } else {
                 Link.Play(_player);
             }
         }
 
         public override void Quit(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
-            if (SkipNode) {
-                _onQuit?.Invoke();
-                return;
-            }
-
             Link.Quit(_player, _isClosingConversation, _onQuit);
         }
         #endregion
