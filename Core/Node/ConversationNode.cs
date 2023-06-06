@@ -42,6 +42,7 @@ namespace EnhancedFramework.Conversations {
         public const string DefaultText         = "EMPTY";
 
         [PreventCopy, SerializeField, Enhanced, ReadOnly] internal int guid = EnhancedUtility.GenerateGUID();
+        [SerializeField] internal protected bool enabled = true;
 
         #if UNITY_EDITOR
         // Conversation editor window related properties.

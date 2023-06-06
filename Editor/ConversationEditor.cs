@@ -25,16 +25,21 @@ namespace EnhancedFramework.Conversations.Editor {
         }
 
         public override void OnInspectorGUI() {
-            serializedObject.Update();
+            serializedObject.UpdateIfRequiredOrScript();
 
-            // While drawing the window inspector, constantly repaint to correctly display it.
-            if (ConversationEditorWindow.DrawInsepector(conversation)) {
-                Repaint();
-            } else {
-                base.OnInspectorGUI();
+            using (var _scope = new EditorGUI.ChangeCheckScope()) {
+
+                // While drawing the window inspector, constantly repaint to correctly display it.
+                if (ConversationEditorWindow.DrawInsepector(conversation)) {
+                    //Repaint();
+                } else {
+                    base.OnInspectorGUI();
+                }
+
+                if (_scope.changed) {
+                    serializedObject.ApplyModifiedProperties();
+                }
             }
-
-            serializedObject.ApplyModifiedProperties();
         }
         #endregion
     }

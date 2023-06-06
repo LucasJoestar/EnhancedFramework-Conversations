@@ -25,6 +25,11 @@ namespace EnhancedFramework.Conversations {
         /// Whether this event can be played or not.
         /// </summary>
         public abstract bool IsAvailable { get; }
+
+        /// <summary>
+        /// Indicates if this event is currently playing.
+        /// </summary>
+        public abstract bool IsPlaying { get; }
         #endregion
 
         #region Behaviour
@@ -156,7 +161,7 @@ namespace EnhancedFramework.Conversations {
         [SerializeField, DisplayName("Name", true)] private BlockArray<T> events = new BlockArray<T>();
 
         /// <summary>
-        /// Displayd name of this group.
+        /// Displayed name of this group.
         /// </summary>
         public string Name {
             get {
@@ -173,6 +178,19 @@ namespace EnhancedFramework.Conversations {
 
         public override bool IsAvailable {
             get { return events.Count != 0; }
+        }
+
+        public override bool IsPlaying {
+            get {
+
+                foreach (T _event in events) {
+                    if (_event.IsPlaying) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
         #endregion
 

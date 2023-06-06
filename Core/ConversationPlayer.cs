@@ -139,6 +139,7 @@ namespace EnhancedFramework.Conversations {
         public virtual void PlayNextNode() {
             // If there is no other node to play, terminate playing the conversation.
             if (!GetNextNode(out ConversationNode _next)) {
+
                 Close();
                 return;
             }
@@ -152,6 +153,13 @@ namespace EnhancedFramework.Conversations {
         /// Override this to implement a specific behaviour.
         /// </summary>
         public virtual void PlayCurrentNode() {
+
+            if (!CurrentNode.enabled) {
+
+                PlayNextNode();
+                return;
+            }
+
             CurrentNode.Play(this);
         }
 

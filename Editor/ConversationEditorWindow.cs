@@ -119,9 +119,21 @@ namespace EnhancedFramework.Conversations.Editor {
         }
 
         private void OnFocus() {
-            // Select the editing conversation while focused to display various parameters in the inspector.
-            if ((conversation != null) && (Selection.activeObject != conversation)) {
-                Selection.activeObject = conversation;
+
+            Object _selection = Selection.activeObject;
+
+            if (_selection != conversation) {
+
+                if (_selection is Conversation _conversation) {
+
+                    // Update selection.
+                    SetConversation(_conversation);
+                }
+                else if (conversation != null) {
+
+                    // Select the editing conversation while focused to display various parameters in the inspector.
+                    Selection.activeObject = conversation;
+                }
             }
         }
 
@@ -1242,7 +1254,6 @@ namespace EnhancedFramework.Conversations.Editor {
                 if (_node.isSelected) {
                     selectedProperty = _property;
                     selectedNode = _node;
-
                     return true;
                 }
 

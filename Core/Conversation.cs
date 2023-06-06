@@ -350,17 +350,25 @@ namespace EnhancedFramework.Conversations {
 
         #region Player
         private ConversationPlayer player = null;
+        private bool needReset = false;
 
         // -----------------------
 
         /// <inheritdoc cref="CreatePlayer(ConversationNode)"/>
         public ConversationPlayer CreatePlayer() {
-            player = System.Activator.CreateInstance(PlayerType) as ConversationPlayer;
+
+            // Reset.
+            if (needReset) {
+
+                ResetNodes();
+                needReset = false;
+            }
+
+            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
             player.Setup(this);
 
             // Event.
             OnPlayed?.Invoke(this, player);
-
             return player;
         }
 
@@ -371,7 +379,15 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_currentNode">First node to play.</param>
         /// <returns>The newly created <see cref="ConversationPlayer"/> to play this conversation.</returns>
         public ConversationPlayer CreatePlayer(ConversationNode _currentNode) {
-            player = System.Activator.CreateInstance(PlayerType) as ConversationPlayer;
+
+            // Reset.
+            if (needReset) {
+
+                ResetNodes();
+                needReset = false;
+            }
+
+            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
             player.Setup(this, _currentNode);
 
             // Event.
@@ -442,7 +458,7 @@ namespace EnhancedFramework.Conversations {
                 return null;
             }
 
-            ConversationNode _node = System.Activator.CreateInstance(_nodeType) as ConversationNode;
+            ConversationNode _node = Activator.CreateInstance(_nodeType) as ConversationNode;
             _root.AddNode(_node);
 
             return _node;
@@ -540,6 +556,13 @@ namespace EnhancedFramework.Conversations {
                     DoResetNode(_innerNode);
                 }
             }
+        }
+
+        /// <summary>
+        /// Mark this database as requiring to be reset.
+        /// </summary>
+        public void ResetForNextPlay() {
+            needReset = true;
         }
         #endregion
 

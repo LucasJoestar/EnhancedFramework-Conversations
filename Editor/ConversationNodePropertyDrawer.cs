@@ -46,6 +46,14 @@ namespace EnhancedFramework.Conversations.Editor {
             //  A simple "isVisible" property from the SerializedProperty would simplify this mess.
 
             EditorGUI.PropertyField(_position, _current);
+
+            IncreasePosition();
+
+            _current.Next(false);
+            _nextVisible.NextVisible(false);
+
+            EditorGUI.PropertyField(_position, _current);
+
             IncreasePosition(Margins);
 
             string _section = ObjectNames.NicifyVariableName(_property.managedReferenceFullTypename.Split('.').Last());

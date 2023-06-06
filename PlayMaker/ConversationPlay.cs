@@ -4,7 +4,9 @@
 //
 // ================================================================================================ //
 
+using EnhancedEditor;
 using HutongGames.PlayMaker;
+using System.Xml.Linq;
 using UnityEngine;
 
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
@@ -41,8 +43,8 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.OnEnter();
 
             if (GetConversation(out Conversation _conversation)) {
-                _conversation.OnClosed += OnClosed;
 
+                _conversation.OnClosed += OnClosed;
                 _conversation.CreatePlayer();
             }
 
@@ -60,7 +62,9 @@ namespace EnhancedFramework.Conversations.PlayMaker {
         // -----------------------
 
         private bool GetConversation(out Conversation _conversation) {
+
             if (Conversation.Value is ConversationBehaviour _behaviour) {
+
                 _conversation = _behaviour.Conversation;
                 return true;
             }

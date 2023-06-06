@@ -4,12 +4,8 @@
 //
 // ================================================================================================ //
 
-using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
-using UnityEngine;
-
-using Min = EnhancedEditor.MinAttribute;
 
 namespace EnhancedFramework.Conversations {
     /// <summary>
@@ -18,14 +14,15 @@ namespace EnhancedFramework.Conversations {
     [Serializable]
     public abstract class DelayedConversationEvent : ConversationEvent {
         #region Global Members
-        [Tooltip("Delay before playing this event, in second(s)")]
-        [SerializeField, Enhanced, ShowIf("ShowDelay"), Min(0f)] public float Delay = 0f;
-
         /// <summary>
-        /// Override this to hide the delay field in the inspector.
+        /// Delay before playing this event, in second(s).
         /// </summary>
-        public virtual bool ShowDelay {
-            get { return true; }
+        public virtual float Delay {
+            get { return 0f; }
+        }
+
+        public override bool IsPlaying {
+            get { return delayedCall.IsValid; }
         }
         #endregion
 
@@ -40,7 +37,7 @@ namespace EnhancedFramework.Conversations {
                 OnPlayed(_player);
             } else {
                 // Delay.
-                delayedCall = Delayer.Call(Delay, () => OnPlayed(_player), false);
+                delayedCall = Delayer.Call(Delay, () => OnPlayed(_player));
             }
 
             return true;
