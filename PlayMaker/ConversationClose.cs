@@ -15,7 +15,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// </summary>
     [Tooltip("Closes a Conversation")]
     [ActionCategory("Conversation")]
-    public class ConversationClose : FsmStateAction {
+    public sealed class ConversationClose : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable

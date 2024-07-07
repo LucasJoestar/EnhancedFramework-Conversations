@@ -4,9 +4,8 @@
 //
 // ================================================================================================ //
 
-using EnhancedEditor;
 using HutongGames.PlayMaker;
-using System.Xml.Linq;
+using System;
 using UnityEngine;
 
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
@@ -17,7 +16,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// </summary>
     [Tooltip("Plays a Conversation")]
     [ActionCategory("Conversation")]
-    public class ConversationPlay : FsmStateAction {
+    public sealed class ConversationPlay : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Closed
@@ -32,11 +31,15 @@ namespace EnhancedFramework.Conversations.PlayMaker {
         #endregion
 
         #region Behaviour
+        private Action<Conversation, ConversationPlayer> onClosedCallback = null;
+
+        // -----------------------
+
         public override void Reset() {
             base.Reset();
 
             Conversation = null;
-            ClosedEvent = null;
+            ClosedEvent  = null;
         }
 
         public override void OnEnter() {
@@ -44,7 +47,9 @@ namespace EnhancedFramework.Conversations.PlayMaker {
 
             if (GetConversation(out Conversation _conversation)) {
 
-                _conversation.OnClosed += OnClosed;
+                onClosedCallback ??= OnClosed;
+
+                _conversation.OnClosed += onClosedCallback;
                 _conversation.CreatePlayer();
             }
 
@@ -55,7 +60,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.OnExit();
 
             if (GetConversation(out Conversation _conversation)) {
-                _conversation.OnClosed -= OnClosed;
+                _conversation.OnClosed -= onClosedCallback;
             }
         }
 

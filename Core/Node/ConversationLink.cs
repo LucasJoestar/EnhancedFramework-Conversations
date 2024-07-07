@@ -51,9 +51,7 @@ namespace EnhancedFramework.Conversations {
 
         public override bool IsAvailable {
             get {
-                return GetLink(out ConversationNode _link)
-                     ? _link.IsAvailable
-                     : false;
+                return GetLink(out ConversationNode _link) && _link.IsAvailable;
             }
         }
 
@@ -74,9 +72,7 @@ namespace EnhancedFramework.Conversations {
 
         public override bool IsClosingNode {
             get {
-                return GetLink(out ConversationNode _link)
-                       ? _link.IsClosingNode
-                       : true;
+                return !GetLink(out ConversationNode _link) || _link.IsClosingNode;
             }
         }
 
@@ -98,13 +94,7 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_link"><inheritdoc cref="Link" path="/summary"/></param>
         /// <returns>True if this node link was successfully found, false otherwise.</returns>
         public bool GetLink(out ConversationNode _link) {
-            if (nodes.Length == 0) {
-                _link = null;
-                return false;
-            }
-
-            _link = nodes[0];
-            return true;
+            return nodes.SafeFirst(out _link);
         }
 
         /// <summary>
@@ -184,18 +174,18 @@ namespace EnhancedFramework.Conversations {
         protected internal override int OnEditorContextMenu(int _index, out GUIContent _content, out Action _callback, out bool _enabled) {
             switch (_index) {
                 case 0:
-                    _content = new GUIContent("Paste Link as Override", "Overrides this link with the last one copied in the clipboard.");
+                    _content  = new GUIContent("Paste Link as Override", "Overrides this link with the last one copied in the clipboard.");
                     _callback = PasteLink;
 
                     ConversationNode _link = ConversationNodeUtility.CopyBuffer;
-                    _enabled = (_link != null) && !(_link is ConversationLink);
+                    _enabled = (_link != null) && (_link is not ConversationLink);
 
                     break;
 
                 default:
-                    _content = null;
+                    _content  = null;
                     _callback = null;
-                    _enabled = false;
+                    _enabled  = false;
 
                     break;
             }

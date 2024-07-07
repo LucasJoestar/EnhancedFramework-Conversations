@@ -33,14 +33,23 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
+        private Action unregisterPendingEventCallback = null;
+
+        // -----------------------
+
         /// <summary>
         /// Plays all given events.
         /// </summary>
         /// <param name="_player"><see cref="ConversationPlayer"/> of the conversation being played.</param>
         /// <param name="_events">Events to play.</param>
-        public static void Play(ConversationPlayer _player, params ConversationEvent[] _events) {
-            foreach (var _event in _events) {
-                _event.Play(_player);
+        public static void Play(ConversationPlayer _player, IList<ConversationEvent> _events) {
+            if (_events != null) {
+
+                int _count = _events.Count;
+                for (int i = 0; i < _count; i++) {
+
+                    _events[i].Play(_player);
+                }
             }
         }
 
@@ -51,9 +60,14 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_isClosingConversation">Indicates if the associated conversation is being closed or not.</param>
         /// <param name="_onComplete">Delegate to call once all events are stopped.</param>
         /// <param name="_events">Events to stop.</param>
-        public static void Stop(ConversationPlayer _player, bool _isClosingConversation, Action _onComplete, params ConversationEvent[] _events) {
-            foreach (var _event in _events) {
-                _event.Stop(_player, _isClosingConversation);
+        public static void Stop(ConversationPlayer _player, IList<ConversationEvent> _events, bool _isClosingConversation, Action _onComplete) {
+            if (_events != null) {
+
+                int _count = _events.Count;
+                for (int i = 0; i < _count; i++) {
+
+                    _events[i].Stop(_player, _isClosingConversation);
+                }
             }
 
             CompleteQuit(_onComplete);
@@ -82,19 +96,21 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_player"><see cref="ConversationPlayer"/> of the conversation being played.</param>
         /// <param name="_isClosingConversation">Indicates if the associated conversation is being closed or not.</param>
         internal void Stop(ConversationPlayer _player, bool _isClosingConversation) {
-            if (IsAvailable) {
+            if (!IsAvailable)
+                return;
 
-                RegisterPendingEvent(this);
+            RegisterPendingEvent(this);
 
-                if (OnStop(_player, _isClosingConversation, Unregister)) {
-                    Unregister();
-                }
+            unregisterPendingEventCallback ??= Unregister;
 
-                // ----- Local Method ----- \\
+            if (OnStop(_player, _isClosingConversation, unregisterPendingEventCallback)) {
+                Unregister();
+            }
 
-                void Unregister() {
-                    UnregisterPendingEvent(this);
-                }
+            // ----- Local Method ----- \\
+
+            void Unregister() {
+                UnregisterPendingEvent(this);
             }
         }
 
@@ -182,9 +198,8 @@ namespace EnhancedFramework.Conversations {
 
         public override bool IsPlaying {
             get {
-
-                foreach (T _event in events) {
-                    if (_event.IsPlaying) {
+                for (int i = events.Count; i-- > 0;) {
+                    if (events[i].IsPlaying) {
                         return true;
                     }
                 }
@@ -197,9 +212,10 @@ namespace EnhancedFramework.Conversations {
         #region Behaviour
         protected override bool OnPlay(ConversationPlayer _player) {
             bool _success = false;
+            int _count = events.Count;
 
-            foreach (T _event in events) {
-                if (_event.Play(_player)) {
+            for (int i = 0; i < _count; i++) {
+                if (events[i].Play(_player)) {
                     _success = true;
                 }
             }
@@ -208,8 +224,10 @@ namespace EnhancedFramework.Conversations {
         }
 
         protected override bool OnStop(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
-            foreach (T _event in events) {
-                _event.Stop(_player, _isClosingConversation);
+            int _count = events.Count;
+
+            for (int i = 0; i < _count; i++) {
+                events[i].Stop(_player, _isClosingConversation);
             }
 
             return true;

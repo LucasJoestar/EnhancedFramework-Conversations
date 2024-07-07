@@ -22,15 +22,17 @@ namespace EnhancedFramework.Conversations {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Conversation/Conversation")]
-    public class ConversationBehaviour : EnhancedBehaviour
-                                         #if LOCALIZATION_ENABLED
-                                         , IResourceBehaviour<LocalizationResourceLoader>
-                                         #endif
+    public sealed class ConversationBehaviour : EnhancedBehaviour
+                                                #if LOCALIZATION_ENABLED
+                                                , IResourceBehaviour<LocalizationResourceLoader>
+                                                #endif
     {
         #region Global Members
         [Section("Conversation")]
 
         [SerializeField, Enhanced, Required] private Conversation conversation = null;
+
+        // -----------------------
 
         /// <summary>
         /// The <see cref="Conversations.Conversation"/> of this behaviour.

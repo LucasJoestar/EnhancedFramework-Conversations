@@ -42,6 +42,7 @@ namespace EnhancedFramework.Conversations {
         public const string DefaultText         = "EMPTY";
 
         [PreventCopy, SerializeField, Enhanced, ReadOnly] internal int guid = EnhancedUtility.GenerateGUID();
+        [SerializeField] internal protected bool available = true;
         [SerializeField] internal protected bool enabled = true;
 
         #if UNITY_EDITOR
@@ -75,7 +76,7 @@ namespace EnhancedFramework.Conversations {
         /// Indicates if this node is available to be played.
         /// </summary>
         public virtual bool IsAvailable {
-            get { return true; }
+            get { return available; }
         }
 
         /// <summary>
@@ -96,7 +97,21 @@ namespace EnhancedFramework.Conversations {
         /// Indicates if the conversation should be closed after playing this node (check for any available connection(s) by default).
         /// </summary>
         public virtual bool IsClosingNode {
-            get { return (NodeCount == 0) || !Array.Exists(nodes, (n) => n.IsAvailable); }
+            get {
+                for (int i = 0; i < nodes.Length; i++) {
+                    if (nodes[i].IsAvailable)
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Indicates if this node is a root node.
+        /// </summary>
+        public virtual bool IsRoot {
+            get { return false; }
         }
 
         // -----------------------
@@ -175,7 +190,7 @@ namespace EnhancedFramework.Conversations {
 
                 for (int i = 0; i < nodes.Length; i++) {
                     ConversationNode _innerNode = _source.nodes[i];
-                    ConversationNode _new = System.Activator.CreateInstance(_innerNode.GetType()) as ConversationNode;
+                    ConversationNode _new = Activator.CreateInstance(_innerNode.GetType()) as ConversationNode;
 
                     nodes[i] = _new.CopyNode(_innerNode, _copyConnections);
                 }
@@ -203,7 +218,7 @@ namespace EnhancedFramework.Conversations {
 
             // Self.
             if (_doTransmuteSelf) {
-                var _new = System.Activator.CreateInstance(_type);
+                var _new = Activator.CreateInstance(_type);
                 ConversationNode _node = EnhancedUtility.CopyObjectContent(this, _new, true) as ConversationNode;
 
                 if (_node is ConversationLink _link) {
@@ -276,7 +291,7 @@ namespace EnhancedFramework.Conversations {
                 return;
             }
 
-            for (int i = 0; i < NodeCount; i++) {
+            for (int i = NodeCount; i-- > 0;) {
                 GetNodeAt(i).GetLocalizationTables(_stringTables, _assetTables);
             }
         }
@@ -337,9 +352,9 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_enabled">Whether this menu item should be enabled or not.</param>
         /// <returns>Total number of item(s) to be added to the menu.</returns>
         internal protected virtual int OnEditorContextMenu(int _index, out GUIContent _content, out Action _callback, out bool _enabled) {
-            _content = null;
+            _content  = null;
             _callback = null;
-            _enabled = false;
+            _enabled  = false;
 
             return 0;
         }
@@ -352,7 +367,7 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_conversation">The source <see cref="Conversation"/> of this node.</param>
         /// <param name="_settings">The <see cref="ConversationSettings"/> of this node <see cref="Conversation"/>.</param>
         /// <param name="_player">The <see cref="ConversationPlayer"/> used to play this node.</param>
-        #pragma warning disable IDE0051
+        #pragma warning disable
         private void Doc(Conversation _conversation, ConversationSettings _settings, ConversationPlayer _player) { }
         #endregion
     }

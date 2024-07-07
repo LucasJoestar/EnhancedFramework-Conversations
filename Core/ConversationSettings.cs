@@ -22,9 +22,9 @@ namespace EnhancedFramework.Conversations {
     /// Behaviours used to get the next node to play from a <see cref="ConversationPlayer"/>.
     /// </summary>
     public enum NextNodeBehaviour {
-        PlayFirst,
-        PlayLast,
-        Random
+        PlayFirst = 0,
+        PlayLast  = 1,
+        Random    = 2,
     }
 
     /// <summary>
@@ -77,7 +77,9 @@ namespace EnhancedFramework.Conversations {
         /// <summary>
         /// Speakers of the conversation.
         /// </summary>
-        public T[] Speakers = new T[] { };
+        public T[] Speakers = new T[0];
+
+        // -----------------------
 
         public override int SpeakerCount {
             get { return Speakers.Length; }

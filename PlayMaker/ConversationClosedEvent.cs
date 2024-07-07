@@ -5,6 +5,7 @@
 // ================================================================================================ //
 
 using HutongGames.PlayMaker;
+using System;
 using UnityEngine;
 
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
@@ -15,7 +16,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when a Conversation is being closed")]
     [ActionCategory("Conversation")]
-    public class ConversationClosedEvent : FsmStateAction {
+    public sealed class ConversationClosedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event
@@ -30,6 +31,10 @@ namespace EnhancedFramework.Conversations.PlayMaker {
         #endregion
 
         #region Behaviour
+        private Action<Conversation, ConversationPlayer> onClosedCallback = null;
+
+        // -----------------------
+
         public override void Reset() {
             base.Reset();
 
@@ -41,7 +46,9 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.OnEnter();
 
             if (Conversation.Value is Conversation _conversation) {
-                _conversation.OnClosed += OnClosed;
+
+                onClosedCallback ??= OnClosed;
+                _conversation.OnClosed += onClosedCallback;
             }
 
             Finish();
@@ -51,7 +58,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.OnExit();
 
             if (Conversation.Value is Conversation _conversation) {
-                _conversation.OnClosed -= OnClosed;
+                _conversation.OnClosed -= onClosedCallback;
             }
         }
 

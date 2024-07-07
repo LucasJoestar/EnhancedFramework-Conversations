@@ -5,7 +5,6 @@
 // ================================================================================================ //
 
 using EnhancedEditor;
-using EnhancedFramework.Core;
 using EnhancedFramework.Timeline;
 using System;
 using System.ComponentModel;
@@ -19,7 +18,7 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// Plays a <see cref="ConversationNode"/> during this clip.
     /// </summary>
     [DisplayName("Conversation/Play Conversation Node")]
-    public class PlayConversationNodeClip : ConversationPlayableAsset<PlayConversationNodeBehaviour> {
+    public sealed class PlayConversationNodeClip : ConversationPlayableAsset<PlayConversationNodeBehaviour> {
         #region Utility
         public override string ClipDefaultName {
             get { return "Play Conversation Node"; }
@@ -31,13 +30,13 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// <see cref="PlayConversationNodeClip"/>-related <see cref="PlayableBehaviour"/>.
     /// </summary>
     [Serializable]
-    public class PlayConversationNodeBehaviour : EnhancedPlayableBehaviour<Conversation> {
+    public sealed class PlayConversationNodeBehaviour : EnhancedPlayableBehaviour<Conversation> {
         #region Global Members
         [Tooltip("If true, plays the next node from the active conversation")]
         public bool PlayNext = true;
 
         [Tooltip("ID of the node to play")]
-        [Enhanced, ShowIf("PlayNext", ConditionType.False)] public int NodeGUID = 0;
+        [Enhanced, ShowIf(nameof(PlayNext), ConditionType.False)] public int NodeGUID = 0;
 
         // -----------------------
 

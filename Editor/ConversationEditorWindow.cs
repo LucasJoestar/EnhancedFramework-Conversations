@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using EnhancedEditor.Editor;
+using EnhancedFramework.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,7 @@ using UnityEditorInternal;
 using UnityEngine;
 
 using ArrayUtility = EnhancedEditor.ArrayUtility;
-using Object = UnityEngine.Object;
+using Object       = UnityEngine.Object;
 
 namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
@@ -24,9 +25,9 @@ namespace EnhancedFramework.Conversations.Editor {
     /// <para/>
     /// This is where the game writers and designers can write and configure the dialogues to be used in the game.
     /// </summary>
-    public class ConversationEditorWindow : EditorWindow {
+    public sealed class ConversationEditorWindow : EditorWindow {
         #region Styles
-        private class Styles {
+        private static class Styles {
             public static readonly GUIStyle LeftButton = new GUIStyle(EditorStyles.miniButtonLeft) {
                 fontSize = 8
             };
@@ -577,7 +578,7 @@ namespace EnhancedFramework.Conversations.Editor {
             GUIStyle _style = EnhancedEditorStyles.RichText;
             string _text = _node.Text;
 
-            string _displayedText = _node.GetEditorDisplayedText().Replace('\n', ' ');
+            string _displayedText = EnhancedStringParserUtility.Parse(_node.GetEditorDisplayedText().Replace('\n', ' '));
             string _newText;
 
             // Configured speaker color.

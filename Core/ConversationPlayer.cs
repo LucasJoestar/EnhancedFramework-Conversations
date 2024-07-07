@@ -5,9 +5,8 @@
 // ================================================================================================ //
 
 using EnhancedEditor;
+using EnhancedFramework.Core;
 using System;
-
-using Random = UnityEngine.Random;
 
 namespace EnhancedFramework.Conversations {
     /// <summary>
@@ -52,6 +51,10 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region State
+        private Action onClosedCallback = null;
+
+        // -----------------------
+
         /// <inheritdoc cref="Setup(Conversation, ConversationNode)"/>
         public void Setup(Conversation _conversation) {
             Setup(_conversation, _conversation.Root);
@@ -64,7 +67,7 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_currentNode">The first <see cref="ConversationNode"/> to play.</param>
         public virtual void Setup(Conversation _conversation, ConversationNode _currentNode) {
             Conversation = _conversation;
-            CurrentNode = _currentNode;
+            CurrentNode  = _currentNode;
 
             IsPlaying = true;
             OnSetup();
@@ -75,14 +78,18 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <param name="_onNodeQuit">Delegate to be called once the current node was quit.</param>
         public void Close(Action _onNodeQuit = null) {
-            _onNodeQuit += () => Conversation.OnPlayerClosed(this);
+            onClosedCallback ??= () => Conversation.OnPlayerClosed(this);
 
             if (!IsPlaying) {
+
                 _onNodeQuit?.Invoke();
+                onClosedCallback.Invoke();
                 return;
             }
 
             IsPlaying = false;
+
+            _onNodeQuit += onClosedCallback;
             OnClose(_onNodeQuit);
         }
 
@@ -95,7 +102,12 @@ namespace EnhancedFramework.Conversations {
         /// <br/> Use this to update the game current state and interface.
         /// </summary>
         protected virtual void OnSetup() {
-            PlayCurrentNode();
+
+            if (CurrentNode.IsAvailable) {
+                PlayCurrentNode();
+            } else {
+                Close();
+            }
         }
 
         /// <summary>
@@ -111,6 +123,10 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
+        private Action playCurrentNodeCallback = null;
+
+        // -----------------------
+
         /// <summary>
         /// Replays the current node from the start.
         /// </summary>
@@ -124,11 +140,20 @@ namespace EnhancedFramework.Conversations {
         /// Override this to implement a specific behaviour.
         /// </summary>
         /// <param name="_node">The next <see cref="ConversationNode"/> to play.</param>
-        public virtual void PlayNode(ConversationNode _node) {
+        public virtual void PlayNode(ConversationNode _node, bool _play = true) {
             ConversationNode _previous = CurrentNode;
             CurrentNode = _node;
 
-            _previous.Quit(this, false, PlayCurrentNode);
+            Action _onQuit;
+
+            if (_play) {
+                playCurrentNodeCallback ??= PlayCurrentNode;
+                _onQuit = playCurrentNodeCallback;
+            } else {
+                _onQuit = null;
+            }
+
+            _previous.Quit(this, false, _onQuit);
         }
 
         /// <summary>
@@ -136,7 +161,7 @@ namespace EnhancedFramework.Conversations {
         /// <para/>
         /// Override this to implement a specific behaviour.
         /// </summary>
-        public virtual void PlayNextNode() {
+        public virtual void PlayNextNode(bool _play = true) {
             // If there is no other node to play, terminate playing the conversation.
             if (!GetNextNode(out ConversationNode _next)) {
 
@@ -144,7 +169,7 @@ namespace EnhancedFramework.Conversations {
                 return;
             }
 
-            PlayNode(_next);
+            PlayNode(_next, _play);
         }
 
         /// <summary>
@@ -171,6 +196,81 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_next">The next <see cref="ConversationNode"/> to play.</param>
         /// <returns>True if a new node to play was successfully found, false otherwise.</returns>
         public abstract bool GetNextNode(out ConversationNode _next);
+
+        /// <param name="_behaviour">Behaviour used to get the next node.</param>
+        /// <param name="_node">Current node to get the next node from.</param>
+        /// <inheritdoc cref="GetNextNode(out ConversationNode))"/>
+        public virtual bool GetNextNode(NextNodeBehaviour _behaviour, ConversationNode _node, out ConversationNode _next) {
+            switch (_behaviour) {
+
+                // Get the first available node.
+                case NextNodeBehaviour.PlayFirst:
+                    for (int i = 0; i < _node.NodeCount; i++) {
+                        _next = _node.GetNodeAt(i);
+
+                        if (_next.IsAvailable) {
+                            return true;
+                        }
+                    }
+                    break;
+
+                // Get the last available node.
+                case NextNodeBehaviour.PlayLast:
+                    for (int i = _node.NodeCount; i-- > 0;) {
+                        _next = _node.GetNodeAt(i);
+
+                        if (_next.IsAvailable) {
+                            return true;
+                        }
+                    }
+                    break;
+
+                // Play a random node.
+                case NextNodeBehaviour.Random:
+                    int _count = 0;
+
+                    for (int i = _node.NodeCount; i-- > 0;) {
+                        if (_node.GetNodeAt(i).IsAvailable) {
+                            _count++;
+                        }
+                    }
+
+                    if (_count != 0) {
+
+                        // Random.
+                        int _random;
+                        if (_count == 1) {
+
+                            _random = 0;
+
+                        } else {
+
+                            _random = Mathm.RandomNoRepeat(0, _count, Conversation.lastSelectedIndex);
+                            Conversation.lastSelectedIndex = _random;
+                        }
+
+                        // Get.
+                        for (int i = _node.NodeCount; i-- > 0;) {
+                            _next = _node.GetNodeAt(i);
+
+                            if (_next.IsAvailable) {
+                                if (_random == 0) {
+                                    return true;
+                                }
+
+                                _random--;
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            _next = null;
+            return false;
+        }
         #endregion
 
         #region Utility
@@ -223,63 +323,7 @@ namespace EnhancedFramework.Conversations {
 
         #region Behaviour
         public override bool GetNextNode(out ConversationNode _next) {
-            switch (Settings.NextNodeBehaviour) {
-
-                // Get the first available node.
-                case NextNodeBehaviour.PlayFirst:
-                    for (int i = 0; i < CurrentNode.NodeCount; i++) {
-                        _next = CurrentNode.GetNodeAt(i);
-
-                        if (_next.IsAvailable) {
-                            return true;
-                        }
-                    }
-                    break;
-
-                // Get the last available node.
-                case NextNodeBehaviour.PlayLast:
-                    for (int i = CurrentNode.NodeCount; i-- > 0;) {
-                        _next = CurrentNode.GetNodeAt(i);
-
-                        if (_next.IsAvailable) {
-                            return true;
-                        }
-                    }
-                    break;
-
-                // Play a random node.
-                case NextNodeBehaviour.Random:
-                    int _count = 0;
-
-                    for (int i = CurrentNode.NodeCount; i-- > 0;) {
-                        if (CurrentNode.GetNodeAt(i).IsAvailable) {
-                            _count++;
-                        }
-                    }
-
-                    if (_count != 0) {
-                        int _random = Random.Range(0, _count);
-
-                        for (int i = CurrentNode.NodeCount; i-- > 0;) {
-                            _next = CurrentNode.GetNodeAt(i);
-
-                            if (_next.IsAvailable) {
-                                if (_random == 0) {
-                                    return true;
-                                }
-
-                                _random--;
-                            }
-                        }
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-
-            _next = null;
-            return false;
+            return GetNextNode(Settings.NextNodeBehaviour, CurrentNode, out _next);
         }
         #endregion
 

@@ -14,17 +14,17 @@ namespace EnhancedFramework.Conversations.Editor {
     /// Custom <see cref="ConversationLink"/> drawer, used to display the class content when using the <see cref="SerializeReference"/> attribute.
     /// </summary>
     [CustomPropertyDrawer(typeof(ConversationLink), true)]
-    public class ConversationLinkPropertyDrawer : ConversationNodePropertyDrawer {
+    public sealed class ConversationLinkPropertyDrawer : ConversationNodePropertyDrawer {
         #region Drawer Content
-        private const float ButtonWidth = 125f;
+        private const float ButtonWidth  = 125f;
         private const float ButtonHeight = 25f;
 
         private const float ButtonSpacing = 10f;
-        private const float NodeSpacing = 10f;
+        private const float NodeSpacing   = 10f;
 
         private const string NullLinkLabel = "NULL";
 
-        private static readonly GUIContent linkNodeGUI = new GUIContent("Link Node", "The GUID and the label of the associated linked node.");
+        private static readonly GUIContent linkNodeGUI   = new GUIContent("Link Node", "The GUID and the label of the associated linked node.");
         private static readonly GUIContent selectLinkGUI = new GUIContent("Select Link", "Select the associated linked node.");
         private static readonly Color selectLinkColor = SuperColor.Lime.Get();
 

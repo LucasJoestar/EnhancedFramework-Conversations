@@ -5,7 +5,6 @@
 // ================================================================================================ //
 
 using EnhancedEditor;
-using EnhancedFramework.Core;
 using EnhancedFramework.Timeline;
 using System;
 using System.ComponentModel;
@@ -19,7 +18,7 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// Plays a <see cref="Conversation"/> for the duration of the clip.
     /// </summary>
     [DisplayName("Conversation/Play Conversation")]
-    public class PlayConversationClip : ConversationPlayableAsset<PlayConversationBehaviour> {
+    public sealed class PlayConversationClip : ConversationPlayableAsset<PlayConversationBehaviour> {
         #region Utility
         public override string ClipDefaultName {
             get { return "Conversation"; }
@@ -31,7 +30,7 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// <see cref="PlayConversationClip"/>-related <see cref="PlayableBehaviour"/>.
     /// </summary>
     [Serializable]
-    public class PlayConversationBehaviour : EnhancedPlayableBehaviour<Conversation> {
+    public sealed class PlayConversationBehaviour : EnhancedPlayableBehaviour<Conversation> {
         #region Global Members
         [Tooltip("If true, automatically closes the conversation on exit")]
         public bool AutoClose = true;

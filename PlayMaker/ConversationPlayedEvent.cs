@@ -5,6 +5,7 @@
 // ================================================================================================ //
 
 using HutongGames.PlayMaker;
+using System;
 using UnityEngine;
 
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
@@ -15,7 +16,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when a Conversation starts being played")]
     [ActionCategory("Conversation")]
-    public class ConversationPlayedEvent : FsmStateAction {
+    public sealed class ConversationPlayedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event
@@ -30,18 +31,24 @@ namespace EnhancedFramework.Conversations.PlayMaker {
         #endregion
 
         #region Behaviour
+        private Action<Conversation, ConversationPlayer> onPlayedCallback = null;
+
+        // -----------------------
+
         public override void Reset() {
             base.Reset();
 
             Conversation = null;
-            PlayedEvent = null;
+            PlayedEvent  = null;
         }
 
         public override void OnEnter() {
             base.OnEnter();
 
             if (Conversation.Value is Conversation _conversation) {
-                _conversation.OnPlayed += OnPlayed;
+
+                onPlayedCallback ??= OnPlayed;
+                _conversation.OnPlayed += onPlayedCallback;
             }
 
             Finish();
@@ -51,7 +58,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.OnExit();
 
             if (Conversation.Value is Conversation _conversation) {
-                _conversation.OnPlayed -= OnPlayed;
+                _conversation.OnPlayed -= onPlayedCallback;
             }
         }
 

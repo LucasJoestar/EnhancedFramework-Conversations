@@ -68,6 +68,10 @@ namespace EnhancedFramework.Conversations {
         public override string DefaultSpeaker {
             get { return "[ROOT]"; }
         }
+
+        public override bool IsRoot {
+            get { return true; }
+        }
         #endregion
 
         #region Behaviour
@@ -100,7 +104,7 @@ namespace EnhancedFramework.Conversations {
     /// Default <see cref="ConversationPlayer"/> class, only sending logs about its current state.
     /// </summary>
     [Serializable, DisplayName("<None>")]
-    public class ConversationDefaultPlayer : ConversationPlayer<ConversationDefaultSettings> {
+    public sealed class ConversationDefaultPlayer : ConversationPlayer<ConversationDefaultSettings> {
         #region State
         protected override void OnSetup() {
             base.OnSetup();
@@ -128,7 +132,7 @@ namespace EnhancedFramework.Conversations {
 
             // Use a delay before playing the next node,
             // avoiding infinite loops on referenced links.
-            delayedCall = Delayer.Call(.1f, PlayNextNode, false);
+            delayedCall = Delayer.Call(.1f, () => PlayNextNode(true), false);
         }
 
         private void CancelPlay() {
@@ -141,7 +145,7 @@ namespace EnhancedFramework.Conversations {
     /// Default <see cref="ConversationSettings"/> class, only containing an array of <see cref="string"/> for the speakers.
     /// </summary>
     [Serializable, DisplayName("<Default>")]
-    public class ConversationDefaultSettings : ConversationSettings<string> {
+    public sealed class ConversationDefaultSettings : ConversationSettings<string> {
         #region Global Members
         /// <inheritdoc cref="ConversationDefaultSettings"/>
         public ConversationDefaultSettings() {
@@ -156,14 +160,16 @@ namespace EnhancedFramework.Conversations {
         #endregion
     }
 
+    // ===== Conversation ===== \\
+
     /// <summary>
     /// <see cref="ScriptableObject"/> database for a conversation.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "NewConversation", menuName = FrameworkUtility.MenuPath + "Conversation", order = FrameworkUtility.MenuOrder + 50)]
-    public class Conversation : EnhancedScriptableObject
-                                #if LOCALIZATION_ENABLED
-                                , ILocalizable
-                                #endif
+    public sealed class Conversation : EnhancedScriptableObject
+                                       #if LOCALIZATION_ENABLED
+                                       , ILocalizable
+                                       #endif
     {
         public const string FilePrefix = "CNV_";
 
@@ -188,6 +194,8 @@ namespace EnhancedFramework.Conversations {
         [Tooltip("Class used to play this conversation, managing its behaviour")]
         [SerializeField, DisplayName("Conversation Player")]
         private SerializedType<ConversationPlayer> playerType = new SerializedType<ConversationPlayer>(SerializedTypeConstraint.None, typeof(ConversationDefaultPlayer));
+
+        // -----------------------
 
         /// <summary>
         /// Node type to be used when creating a new default node in this conversation (must be derived from <see cref="ConversationNode"/>).
@@ -222,7 +230,7 @@ namespace EnhancedFramework.Conversations {
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeReference, Enhanced, Block] protected ConversationSettings settings = new ConversationDefaultSettings();
+        [SerializeReference, Enhanced, Block] private ConversationSettings settings = new ConversationDefaultSettings();
 
         private static string[] speakers = new string[0];
 
@@ -318,6 +326,10 @@ namespace EnhancedFramework.Conversations {
 
         #region Scriptable Object
         #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
         private void Awake() {
             // Root conversation setup.
             root.conversation = this;
@@ -481,11 +493,12 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_node">Found node matching the given guid (null if none).</param>
         /// <returns>True if a node matching the given guid was successfully found, false otherwise.</returns>
         public bool FindNode(int _guid, out ConversationNode _node) {
-            return DoFindNode(root, out _node);
+            return DoFindNode(_guid, root, out _node);
 
             // ----- Local Method ----- \\
 
-            bool DoFindNode(ConversationNode _root, out ConversationNode _doNode) {
+            static bool DoFindNode(int _guid, ConversationNode _root, out ConversationNode _doNode) {
+
                 foreach (ConversationNode _innerNode in _root.nodes) {
 
                     if (_innerNode.Guid == _guid) {
@@ -493,7 +506,11 @@ namespace EnhancedFramework.Conversations {
                         return true;
                     }
 
-                    if (DoFindNode(_innerNode, out _doNode)) {
+                    if (!_root.ShowNodes) {
+                        continue;
+                    }
+
+                    if (DoFindNode(_guid, _innerNode, out _doNode)) {
                         return true;
                     }
                 }
@@ -510,11 +527,11 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_root">Root of the given node (null if not found).</param>
         /// <returns>True if the given node was successfully found, false otherwise.</returns>
         public bool FindNode(ConversationNode _node, out ConversationNode _root) {
-            return DoFindNode(root, out _root);
+            return DoFindNode(_node, root, out _root);
 
             // ----- Local Method ----- \\
 
-            bool DoFindNode(ConversationNode _root, out ConversationNode _doRoot) {
+            static bool DoFindNode(ConversationNode _node, ConversationNode _root, out ConversationNode _doRoot) {
 
                 foreach (ConversationNode _innerNode in _root.nodes) {
 
@@ -527,7 +544,7 @@ namespace EnhancedFramework.Conversations {
                         continue;
                     }
 
-                    if (DoFindNode(_innerNode, out _doRoot)) {
+                    if (DoFindNode(_node, _innerNode, out _doRoot)) {
                         return true;
                     }
                 }
@@ -545,7 +562,7 @@ namespace EnhancedFramework.Conversations {
 
             // ----- Local Method ----- \\
 
-            void DoResetNode(ConversationNode _root) {
+            static void DoResetNode(ConversationNode _root) {
                 _root.Reset();
 
                 if (!_root.ShowNodes) {
@@ -570,6 +587,7 @@ namespace EnhancedFramework.Conversations {
         #if LOCALIZATION_ENABLED
         /// <inheritdoc cref="ILocalizable.GetLocalizationTables(Set{TableReference}, Set{TableReference})"/>
         public void GetLocalizationTables(Set<TableReference> _stringTables,  Set<TableReference> _assetTables) {
+
             root.GetLocalizationTables(_stringTables, _assetTables);
             settings.GetLocalizationTables(_stringTables, _assetTables);
         }
@@ -577,6 +595,10 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Utility
+        internal int lastSelectedIndex = -1;
+
+        // -----------------------
+
         /// <summary>
         /// Get this conversation <see cref="ConversationSettings"/> type (<see cref="ConversationPlayer{T}"/>-related).
         /// </summary>

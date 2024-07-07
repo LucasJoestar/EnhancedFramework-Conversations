@@ -32,7 +32,7 @@ namespace EnhancedFramework.Conversations {
 
             // ----- Local Method ----- \\
 
-            void ResetNode(ConversationNode _node) {
+            static void ResetNode(ConversationNode _node) {
                 _node.Reset();
 
                 foreach (ConversationNode _subNode in _node.nodes) {

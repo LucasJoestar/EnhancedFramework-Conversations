@@ -27,7 +27,10 @@ namespace EnhancedFramework.Conversations {
         #endregion
 
         #region Behaviour
-        private DelayHandler delayedCall = default;
+        private Action onDelayCompleteCallback = null;
+
+        private ConversationPlayer delayPlayer = null;
+        private DelayHandler delayedCall       = default;
 
         // -----------------------
 
@@ -37,10 +40,19 @@ namespace EnhancedFramework.Conversations {
                 OnPlayed(_player);
             } else {
                 // Delay.
-                delayedCall = Delayer.Call(Delay, () => OnPlayed(_player));
+                onDelayCompleteCallback ??= OnComplete;
+
+                delayPlayer = _player;
+                delayedCall = Delayer.Call(Delay, onDelayCompleteCallback);
             }
 
             return true;
+
+            // ----- Local Method ----- \\
+
+            void OnComplete() {
+                OnPlayed(delayPlayer);
+            }
         }
 
         protected override bool OnStop(ConversationPlayer _player, bool _isClosingConversation, Action _onComplete) {

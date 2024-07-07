@@ -6,7 +6,6 @@
 
 using EnhancedEditor;
 using EnhancedEditor.Editor;
-using EnhancedFramework.Core;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,12 +48,16 @@ namespace EnhancedFramework.Conversations.Editor {
 
             IncreasePosition();
 
-            _current.Next(false);
-            _nextVisible.NextVisible(false);
+            for (int i = 0; i < 2; i++) {
 
-            EditorGUI.PropertyField(_position, _current);
+                _current.Next(false);
+                _nextVisible.NextVisible(false);
 
-            IncreasePosition(Margins);
+                EditorGUI.PropertyField(_position, _current);
+                IncreasePosition(0f);
+            }
+
+            IncreasePosition(Margins - _position.height);
 
             string _section = ObjectNames.NicifyVariableName(_property.managedReferenceFullTypename.Split('.').Last());
             EnhancedEditorGUI.Section(_position, EnhancedEditorGUIUtility.GetLabelGUI(_section));

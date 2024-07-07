@@ -19,5 +19,5 @@ namespace EnhancedFramework.Conversations.Timeline {
     [TrackClipType(typeof(IConversationPlayableAsset))]
     [TrackBindingType(typeof(Conversation), TrackBindingFlags.None)]
     [DisplayName("Enhanced Framework/Conversation Track")]
-    public class ConversationTrack : EnhancedTrack { }
+    public sealed class ConversationTrack : EnhancedTrack { }
 }

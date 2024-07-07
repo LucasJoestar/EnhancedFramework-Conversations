@@ -12,7 +12,7 @@ namespace EnhancedFramework.Conversations.Editor {
     /// Custom <see cref="Conversation"/> editor, used to draw various parameters from the <see cref="ConversationEditorWindow"/>.
     /// </summary>
     [CustomEditor(typeof(Conversation), true), CanEditMultipleObjects]
-    public class ConversationEditor : UnityObjectEditor {
+    public sealed class ConversationEditor : UnityObjectEditor {
         #region Editor Content
         private Conversation conversation = null;
 

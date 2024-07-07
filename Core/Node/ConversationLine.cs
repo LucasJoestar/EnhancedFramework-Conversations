@@ -22,6 +22,10 @@ using DisplayName = EnhancedEditor.DisplayNameAttribute;
 #endif
 
 namespace EnhancedFramework.Conversations {
+    // -------------------------------------------
+    // Base Line
+    // -------------------------------------------
+
     /// <summary>
     /// Base <see cref="ConversationNode"/> line class.
     /// <br/> Inherit from this to create your own lines.
@@ -38,7 +42,7 @@ namespace EnhancedFramework.Conversations {
         [Space(10f)]
 
         [Tooltip("This line speaker")]
-        [SerializeField, Enhanced, DisplayName("Speaker"), Popup("Speakers")] protected int speakerIndex = 0;
+        [SerializeField, Enhanced, DisplayName("Speaker"), Popup(nameof(Conversation.Speakers))] protected int speakerIndex = 0;
 
         [Tooltip("Allow this line to only be played once")]
         [SerializeField] protected bool onlyOnce = false;
@@ -80,7 +84,7 @@ namespace EnhancedFramework.Conversations {
                     return false;
                 }
 
-                return RequiredFlags.Valid;
+                return base.IsAvailable && RequiredFlags.Valid;
             }
         }
         #endregion
@@ -128,6 +132,10 @@ namespace EnhancedFramework.Conversations {
         }
         #endregion
     }
+
+    // -------------------------------------------
+    // Line Nodes
+    // -------------------------------------------
 
     /// <summary>
     /// <see cref="ConversationLine{T}"/> node class with a single text and an associated audio file.

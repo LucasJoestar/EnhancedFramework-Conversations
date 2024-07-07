@@ -15,12 +15,17 @@ namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
     /// <see cref="Item"/>-related game database.
     /// </summary>
-    public class ConversationDatabase : BaseDatabase<ConversationDatabase> {
+    public sealed class ConversationDatabase : BaseDatabase<ConversationDatabase> {
         #region Global Members
         [Section("Conversation Database")]
 
         [Tooltip("All conversations in the database")]
         [SerializeField] private EnhancedCollection<Conversation> conversations = new EnhancedCollection<Conversation>();
+
+        [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
+
+        [Tooltip("Used to search for any specific node type")]
+        [SerializeField] private SerializedType<ConversationNode> searchType = new SerializedType<ConversationNode>(SerializedTypeConstraint.Null | SerializedTypeConstraint.Abstract);
 
         // -----------------------
 
@@ -40,7 +45,12 @@ namespace EnhancedFramework.Conversations.Editor {
         /// <param name="_item"><see cref="Conversation"/> with the given name (null if none).</param>
         /// <returns>True if a <see cref="Conversation"/> with the given name could be successfully found, false otherwise.</returns>
         public bool FindConversation(string _name, out Conversation _conversation) {
-            foreach (Conversation _temp in conversations) {
+
+            List<Conversation> _conversationsSpan = conversations.collection;
+            int _count = _conversationsSpan.Count;
+
+            for (int i = 0; i < _count; i++) {
+                Conversation _temp = _conversationsSpan[i];
 
                 if (_temp.name.RemovePrefix().ToLower().Equals(_name.RemovePrefix().ToLower(), StringComparison.Ordinal)) {
                     _conversation = _temp;
@@ -57,8 +67,10 @@ namespace EnhancedFramework.Conversations.Editor {
         /// </summary>
         public void ResetConversations() {
 
-            foreach (Conversation _conversation in conversations) {
-                _conversation.ResetForNextPlay();
+            List<Conversation> _conversationsSpan = conversations.collection;
+
+            for (int i = _conversationsSpan.Count; i-- > 0;) {
+                _conversationsSpan[i].ResetForNextPlay();
             }
         }
         #endregion
@@ -71,6 +83,42 @@ namespace EnhancedFramework.Conversations.Editor {
         internal void SetDatabase(IList<Conversation> _conversations) {
             conversations.Clear();
             conversations.AddRange(_conversations);
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Utility method used to search for specific node(s) in all game conversations,
+        /// and logging an informative message foreach found matching node.
+        /// </summary>
+        /// <param name="_inherit">If true, also search for all types that inherit from given type.</param>
+        [Button(ActivationMode.Always, SuperColor.Crimson)]
+        public void SearchForNodes(bool _inherit = true) {
+
+            Type _type = searchType.Type;
+
+            foreach (Conversation _conversation in conversations) {
+
+                DoFindNode(_conversation, _conversation.Root);
+            }
+
+            // ----- Local Method ----- \\
+
+            void DoFindNode(Conversation _conversation, ConversationNode _root) {
+
+                foreach (ConversationNode _innerNode in _root.nodes) {
+
+                    if ((_innerNode.GetType() == _type) || (_inherit && _inherit.GetType().IsSubclassOf(_type))) {
+                        Debug.LogWarning($"Found Node => {_innerNode.Text} - {_conversation.name} [{_innerNode.GetType().Name}]");
+                    }
+
+                    if (!_root.ShowNodes) {
+                        continue;
+                    }
+
+                    DoFindNode(_conversation, _innerNode);
+                }
+            }
         }
         #endregion
     }

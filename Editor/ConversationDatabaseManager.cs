@@ -6,15 +6,15 @@
 
 using EnhancedEditor.Editor;
 using UnityEditor;
-using UnityEditor.Build.Reporting;
 using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 
 namespace EnhancedFramework.Conversations.Editor {
     /// <summary>
     /// Editor class manipulating and updating the data contained in the <see cref="Conversation"/>.
     /// </summary>
     [InitializeOnLoad]
-    public class ConversationDatabaseManager : IPreprocessBuildWithReport {
+    public sealed class ConversationDatabaseManager : IPreprocessBuildWithReport {
         #region Global Members
         private static readonly AutoManagedResource<ConversationDatabase> resource = new AutoManagedResource<ConversationDatabase>("ConversationDatabase", false);
 
