@@ -35,8 +35,9 @@ namespace EnhancedFramework.Conversations {
             static void ResetNode(ConversationNode _node) {
                 _node.Reset();
 
-                foreach (ConversationNode _subNode in _node.nodes) {
-                    ResetNode(_subNode);
+                ref ConversationNode[] _span = ref _node.nodes;
+                for (int i = _span.Length; i-- > 0;) {
+                    ResetNode(_span[i]);
                 }
             }
         }

@@ -14,8 +14,8 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// <see cref="FsmStateAction"/> used to close a <see cref="Conversations.Conversation"/>.
     /// </summary>
     [Tooltip("Closes a Conversation")]
-    [ActionCategory("Conversation")]
-    public sealed class ConversationClose : FsmStateAction {
+    [ActionCategory(CategoryName)]
+    public sealed class ConversationClose : BaseConversationFSM {
         #region Global Members
         // -------------------------------------------
         // Variable

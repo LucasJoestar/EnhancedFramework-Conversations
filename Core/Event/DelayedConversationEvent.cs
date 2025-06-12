@@ -32,7 +32,9 @@ namespace EnhancedFramework.Conversations {
         private ConversationPlayer delayPlayer = null;
         private DelayHandler delayedCall       = default;
 
-        // -----------------------
+        // -------------------------------------------
+        // Callback(s)
+        // -------------------------------------------
 
         protected override sealed bool OnPlay(ConversationPlayer _player) {
             // Immediate.
@@ -62,7 +64,9 @@ namespace EnhancedFramework.Conversations {
             return base.OnStop(_player, _isClosingConversation, _onComplete);
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Internal
+        // -------------------------------------------
 
         /// <inheritdoc cref="OnPlay(ConversationPlayer)"/>
         protected abstract void OnPlayed(ConversationPlayer _player);

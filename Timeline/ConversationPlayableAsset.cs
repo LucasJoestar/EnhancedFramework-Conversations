@@ -23,5 +23,9 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// </summary>
     /// <typeparam name="T">The <see cref="EnhancedPlayableBehaviour"/> playable for this asset.</typeparam>
     public abstract class ConversationPlayableAsset<T> : EnhancedPlayableAsset<T, Conversation>, IConversationPlayableAsset
-                                                         where T : EnhancedPlayableBehaviour<Conversation>, new() { }
+                                                         where T : EnhancedPlayableBehaviour<Conversation>, new() {
+        #region Global Members
+        public const string NamePrefix = "Conversation/";
+        #endregion
+    }
 }

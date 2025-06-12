@@ -15,8 +15,8 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// <see cref="FsmStateAction"/> used to send an event when a <see cref="Conversations.Conversation"/> is being closed.
     /// </summary>
     [Tooltip("Sends an Event when a Conversation is being closed")]
-    [ActionCategory("Conversation")]
-    public sealed class ConversationClosedEvent : FsmStateAction {
+    [ActionCategory(CategoryName)]
+    public sealed class ConversationClosedEvent : BaseConversationFSM {
         #region Global Members
         // -------------------------------------------
         // Variable - Event
@@ -39,7 +39,7 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             base.Reset();
 
             Conversation = null;
-            ClosedEvent = null;
+            ClosedEvent  = null;
         }
 
         public override void OnEnter() {
@@ -62,7 +62,9 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Behaviour
+        // -------------------------------------------
 
         private void OnClosed(Conversation _conversation, ConversationPlayer _player) {
             Fsm.Event(ClosedEvent);

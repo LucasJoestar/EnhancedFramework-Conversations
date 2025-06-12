@@ -164,8 +164,9 @@ namespace EnhancedFramework.Conversations {
 
         public override float Duration {
             get {
-                return Line.Audio.IsValid()
-                     ? Line.Audio.Duration
+                AudioAsset _audio = Line.Audio;
+                return _audio.IsValid()
+                     ? _audio.Duration
                      : (Text.Length * .05f);
             }
         }

@@ -17,7 +17,7 @@ namespace EnhancedFramework.Conversations.Timeline {
     /// <summary>
     /// Plays a <see cref="ConversationNode"/> during this clip.
     /// </summary>
-    [DisplayName("Conversation/Play Conversation Node")]
+    [DisplayName(NamePrefix + "Play Conversation Node")]
     public sealed class PlayConversationNodeClip : ConversationPlayableAsset<PlayConversationNodeBehaviour> {
         #region Utility
         public override string ClipDefaultName {

@@ -136,6 +136,16 @@ namespace EnhancedFramework.Conversations {
         }
         #endregion
 
+        #region Node Management
+        public override ref ConversationNode[] GetNodeRefs() {
+            if (GetLink(out ConversationNode _link)) {
+                return ref _link.GetNodeRefs();
+            }
+
+            return ref base.GetNodeRefs();
+        }
+        #endregion
+
         #region Behaviour
         public override void Play(ConversationPlayer _player) {
             if (SkipNode) {

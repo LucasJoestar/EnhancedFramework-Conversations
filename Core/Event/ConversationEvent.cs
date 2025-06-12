@@ -44,10 +44,9 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_events">Events to play.</param>
         public static void Play(ConversationPlayer _player, IList<ConversationEvent> _events) {
             if (_events != null) {
-
                 int _count = _events.Count;
-                for (int i = 0; i < _count; i++) {
 
+                for (int i = 0; i < _count; i++) {
                     _events[i].Play(_player);
                 }
             }
@@ -62,10 +61,9 @@ namespace EnhancedFramework.Conversations {
         /// <param name="_events">Events to stop.</param>
         public static void Stop(ConversationPlayer _player, IList<ConversationEvent> _events, bool _isClosingConversation, Action _onComplete) {
             if (_events != null) {
-
                 int _count = _events.Count;
-                for (int i = 0; i < _count; i++) {
 
+                for (int i = 0; i < _count; i++) {
                     _events[i].Stop(_player, _isClosingConversation);
                 }
             }
@@ -114,7 +112,9 @@ namespace EnhancedFramework.Conversations {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Callback(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="Play(ConversationPlayer)"/>
         protected abstract bool OnPlay(ConversationPlayer _player);
@@ -146,7 +146,9 @@ namespace EnhancedFramework.Conversations {
             onCompleteDelegate = _onComplete;
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Registration
+        // -------------------------------------------
 
         private static void RegisterPendingEvent(ConversationEvent _event) {
             pendingBuffer.Add(_event);
@@ -169,7 +171,7 @@ namespace EnhancedFramework.Conversations {
     /// </summary>
     /// <typeparam name="T"><see cref="ConversationEvent"/> type contained in this group.</typeparam>
     [Serializable]
-    public class ConversationEventGroup<T> : ConversationEvent where T : ConversationEvent {
+    public sealed class ConversationEventGroup<T> : ConversationEvent where T : ConversationEvent {
         #region Global Members
         /// <summary>
         /// All events contained in this group.
@@ -198,8 +200,9 @@ namespace EnhancedFramework.Conversations {
 
         public override bool IsPlaying {
             get {
-                for (int i = events.Count; i-- > 0;) {
-                    if (events[i].IsPlaying) {
+                ref T[] _span = ref events.Array;
+                for (int i = _span.Length; i-- > 0;) {
+                    if (_span[i].IsPlaying) {
                         return true;
                     }
                 }
@@ -212,10 +215,12 @@ namespace EnhancedFramework.Conversations {
         #region Behaviour
         protected override bool OnPlay(ConversationPlayer _player) {
             bool _success = false;
-            int _count = events.Count;
+
+            ref T[] _span = ref events.Array;
+            int _count = _span.Length;
 
             for (int i = 0; i < _count; i++) {
-                if (events[i].Play(_player)) {
+                if (_span[i].Play(_player)) {
                     _success = true;
                 }
             }
@@ -224,10 +229,11 @@ namespace EnhancedFramework.Conversations {
         }
 
         protected override bool OnStop(ConversationPlayer _player, bool _isClosingConversation, Action _onQuit) {
-            int _count = events.Count;
+            ref T[] _span = ref events.Array;
+            int _count = _span.Length;
 
             for (int i = 0; i < _count; i++) {
-                events[i].Stop(_player, _isClosingConversation);
+                _span[i].Stop(_player, _isClosingConversation);
             }
 
             return true;

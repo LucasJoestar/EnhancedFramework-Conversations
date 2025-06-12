@@ -248,16 +248,20 @@ namespace EnhancedFramework.Conversations {
         public string[] Speakers {
             get {
 
-                int _count = settings.SpeakerCount;
-                if (speakers.Length != _count) {
-                    Array.Resize(ref speakers, _count);
+                ConversationSettings _settings = settings;
+
+                int _count = _settings.SpeakerCount;
+                ref string[] _span = ref speakers;
+
+                if (_span.Length != _count) {
+                    Array.Resize(ref _span, _count);
                 }
 
-                for (int i = 0; i < speakers.Length; i++) {
-                    speakers[i] = $"{settings.GetSpeakerAt(i)} [{i + 1}]";
+                for (int i = 0; i < _count; i++) {
+                    _span[i] = $"{_settings.GetSpeakerAt(i)} [{i + 1}]";
                 }
 
-                return speakers;
+                return _span;
             }
         }
 
@@ -267,13 +271,14 @@ namespace EnhancedFramework.Conversations {
         public bool HasDuplicateName {
             get {
 
-                string[] _speakers = Speakers;
-                for (int i = 0; i < _speakers.Length; i++) {
+                ref string[] _span = ref speakers;
+                int _count = _span.Length;
 
-                    string _speaker = _speakers[i];
-                    for (int j = i + 1; j < _speakers.Length; j++) {
+                for (int i = 0; i < _count; i++) {
+                    string _speaker = _span[i];
 
-                        if (_speakers[j] == _speaker) {
+                    for (int j = i + 1; j < _count; j++) {
+                        if (_span[j] == _speaker) {
                             return true;
                         }
                     }
@@ -299,8 +304,9 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         public bool IsPlayable {
             get {
-                foreach (var _node in root.nodes) {
-                    if (_node.IsAvailable) {
+                ref ConversationNode[] _span = ref root.nodes;
+                for (int i = _span.Length; i-- > 0;) {
+                    if (_span[i].IsAvailable) {
                         return true;
                     }
                 }
@@ -371,17 +377,18 @@ namespace EnhancedFramework.Conversations {
 
             // Reset.
             if (needReset) {
-
                 ResetNodes();
                 needReset = false;
             }
 
-            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
-            player.Setup(this);
+            ConversationPlayer _player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player = _player;
+
+            _player.Setup(this);
 
             // Event.
-            OnPlayed?.Invoke(this, player);
-            return player;
+            OnPlayed?.Invoke(this, _player);
+            return _player;
         }
 
         /// <summary>
@@ -394,18 +401,18 @@ namespace EnhancedFramework.Conversations {
 
             // Reset.
             if (needReset) {
-
                 ResetNodes();
                 needReset = false;
             }
 
-            player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
-            player.Setup(this, _currentNode);
+            ConversationPlayer _player = Activator.CreateInstance(PlayerType) as ConversationPlayer;
+            player = _player;
+
+            _player.Setup(this, _currentNode);
 
             // Event.
-            OnPlayed?.Invoke(this, player);
-
-            return player;
+            OnPlayed?.Invoke(this, _player);
+            return _player;
         }
 
         /// <summary>
@@ -413,8 +420,10 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         /// <returns>True if the player could be successfully closed, false otherwise.</returns>
         public bool ClosePlayer() {
-            if (player != null) {
-                player.Close();
+            ConversationPlayer _player = player;
+
+            if (_player != null) {
+                _player.Close();
                 return true;
             }
 
@@ -499,14 +508,20 @@ namespace EnhancedFramework.Conversations {
 
             static bool DoFindNode(int _guid, ConversationNode _root, out ConversationNode _doNode) {
 
-                foreach (ConversationNode _innerNode in _root.nodes) {
+                ref ConversationNode[] _span = ref _root.nodes;
+                int _count = _span.Length;
+
+                bool _showNodes = _root.ShowNodes;
+
+                for (int i = 0; i < _count; i++) {
+                    ConversationNode _innerNode = _span[i];
 
                     if (_innerNode.Guid == _guid) {
                         _doNode = _innerNode;
                         return true;
                     }
 
-                    if (!_root.ShowNodes) {
+                    if (!_showNodes) {
                         continue;
                     }
 
@@ -533,14 +548,20 @@ namespace EnhancedFramework.Conversations {
 
             static bool DoFindNode(ConversationNode _node, ConversationNode _root, out ConversationNode _doRoot) {
 
-                foreach (ConversationNode _innerNode in _root.nodes) {
+                ref ConversationNode[] _span = ref _root.nodes;
+                int _count = _span.Length;
+
+                bool _showNodes = _root.ShowNodes;
+
+                for (int i = 0; i < _count; i++) {
+                    ConversationNode _innerNode = _span[i];
 
                     if (_innerNode == _node) {
                         _doRoot = _root;
                         return true;
                     }
 
-                    if (!_root.ShowNodes) {
+                    if (!_showNodes) {
                         continue;
                     }
 
@@ -569,8 +590,9 @@ namespace EnhancedFramework.Conversations {
                     return;
                 }
 
-                foreach (ConversationNode _innerNode in _root.nodes) {
-                    DoResetNode(_innerNode);
+                ref ConversationNode[] _span = ref _root.nodes;
+                for (int i = _span.Length; i-- > 0;) {
+                    DoResetNode(_span[i]);
                 }
             }
         }

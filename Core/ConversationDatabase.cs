@@ -11,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace EnhancedFramework.Conversations.Editor {
+namespace EnhancedFramework.Conversations {
     /// <summary>
-    /// <see cref="Item"/>-related game database.
+    /// <see cref="Conversation"/>-related game database.
     /// </summary>
     public sealed class ConversationDatabase : BaseDatabase<ConversationDatabase> {
         #region Global Members
@@ -46,11 +46,10 @@ namespace EnhancedFramework.Conversations.Editor {
         /// <returns>True if a <see cref="Conversation"/> with the given name could be successfully found, false otherwise.</returns>
         public bool FindConversation(string _name, out Conversation _conversation) {
 
-            List<Conversation> _conversationsSpan = conversations.collection;
-            int _count = _conversationsSpan.Count;
+            ref List<Conversation> _span = ref conversations.collection;
+            for (int i = _span.Count; i-- > 0;) {
 
-            for (int i = 0; i < _count; i++) {
-                Conversation _temp = _conversationsSpan[i];
+                Conversation _temp = _span[i];
 
                 if (_temp.name.RemovePrefix().ToLower().Equals(_name.RemovePrefix().ToLower(), StringComparison.Ordinal)) {
                     _conversation = _temp;
@@ -67,10 +66,9 @@ namespace EnhancedFramework.Conversations.Editor {
         /// </summary>
         public void ResetConversations() {
 
-            List<Conversation> _conversationsSpan = conversations.collection;
-
-            for (int i = _conversationsSpan.Count; i-- > 0;) {
-                _conversationsSpan[i].ResetForNextPlay();
+            ref List<Conversation> _span = ref conversations.collection;
+            for (int i = _span.Count; i-- > 0;) {
+                _span[i].ResetForNextPlay();
             }
         }
         #endregion
@@ -81,8 +79,7 @@ namespace EnhancedFramework.Conversations.Editor {
         /// </summary>
         /// <param name="_conversations">All conversations to include in the database.</param>
         internal void SetDatabase(IList<Conversation> _conversations) {
-            conversations.Clear();
-            conversations.AddRange(_conversations);
+            conversations.ReplaceBy(_conversations);
         }
         #endregion
 
@@ -97,8 +94,10 @@ namespace EnhancedFramework.Conversations.Editor {
 
             Type _type = searchType.Type;
 
-            foreach (Conversation _conversation in conversations) {
+            ref List<Conversation> _span = ref conversations.collection;
+            for (int i = _span.Count; i-- > 0;) {
 
+                Conversation _conversation = _span[i];
                 DoFindNode(_conversation, _conversation.Root);
             }
 
@@ -106,7 +105,10 @@ namespace EnhancedFramework.Conversations.Editor {
 
             void DoFindNode(Conversation _conversation, ConversationNode _root) {
 
-                foreach (ConversationNode _innerNode in _root.nodes) {
+                ref ConversationNode[] _nodes = ref _root.nodes;
+                for (int i = _nodes.Length; i-- > 0;) {
+
+                    ConversationNode _innerNode = _nodes[i];
 
                     if ((_innerNode.GetType() == _type) || (_inherit && _inherit.GetType().IsSubclassOf(_type))) {
                         Debug.LogWarning($"Found Node => {_innerNode.Text} - {_conversation.name} [{_innerNode.GetType().Name}]");

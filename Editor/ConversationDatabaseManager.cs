@@ -25,7 +25,9 @@ namespace EnhancedFramework.Conversations.Editor {
         /// </summary>
         public static ConversationDatabase Database => resource.GetResource();
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         static ConversationDatabaseManager() {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;

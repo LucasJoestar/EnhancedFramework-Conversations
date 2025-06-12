@@ -15,8 +15,8 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// <see cref="FsmStateAction"/> used to play a <see cref="Conversations.Conversation"/>.
     /// </summary>
     [Tooltip("Plays a Conversation")]
-    [ActionCategory("Conversation")]
-    public sealed class ConversationPlay : FsmStateAction {
+    [ActionCategory(CategoryName)]
+    public sealed class ConversationPlay : BaseConversationFSM {
         #region Global Members
         // -------------------------------------------
         // Variable - Closed
@@ -64,12 +64,13 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Behaviour
+        // -------------------------------------------
 
         private bool GetConversation(out Conversation _conversation) {
 
             if (Conversation.Value is ConversationBehaviour _behaviour) {
-
                 _conversation = _behaviour.Conversation;
                 return true;
             }

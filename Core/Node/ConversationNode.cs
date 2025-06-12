@@ -98,9 +98,11 @@ namespace EnhancedFramework.Conversations {
         /// </summary>
         public virtual bool IsClosingNode {
             get {
-                for (int i = 0; i < nodes.Length; i++) {
-                    if (nodes[i].IsAvailable)
+                ref ConversationNode[] _span = ref nodes;
+                for (int i = _span.Length; i-- > 0;) {
+                    if (_span[i].IsAvailable) {
                         return false;
+                    }
                 }
 
                 return true;
@@ -169,6 +171,13 @@ namespace EnhancedFramework.Conversations {
         }
 
         /// <summary>
+        /// All this object sub node connections.
+        /// </summary>
+        public virtual ref ConversationNode[] GetNodeRefs() {
+            return ref nodes;
+        }
+
+        /// <summary>
         /// Adds a new <see cref="ConversationNode"/> to this node connections.
         /// </summary>
         /// <param name="_node">The <see cref="ConversationNode"/> to add as a connection.</param>
@@ -186,13 +195,17 @@ namespace EnhancedFramework.Conversations {
             EnhancedUtility.CopyObjectContent(_source, this);
 
             if (_copyConnections) {
-                Array.Resize(ref nodes, _source.nodes.Length);
+                ref ConversationNode[] _thisNodes  = ref nodes;
+                ref ConversationNode[] _otherNodes = ref _source.nodes;
 
-                for (int i = 0; i < nodes.Length; i++) {
-                    ConversationNode _innerNode = _source.nodes[i];
+                int _count = _otherNodes.Length;
+                Array.Resize(ref _thisNodes, _count);
+
+                for (int i = 0; i < _count; i++) {
+                    ConversationNode _innerNode = _otherNodes[i];
                     ConversationNode _new = Activator.CreateInstance(_innerNode.GetType()) as ConversationNode;
 
-                    nodes[i] = _new.CopyNode(_innerNode, _copyConnections);
+                    _thisNodes[i] = _new.CopyNode(_innerNode, _copyConnections);
                 }
             }
 
@@ -211,8 +224,12 @@ namespace EnhancedFramework.Conversations {
         internal ConversationNode Transmute(Conversation _conversation, Type _type, bool _doTransmuteSelf = true, bool _doTransmuteConnections = true) {
             // Connections.
             if (_doTransmuteConnections) {
-                for (int i = 0; i < nodes.Length; i++) {
-                    nodes[i].Transmute(_conversation, _type);
+
+                ref ConversationNode[] _span = ref nodes;
+                int _count = _span.Length;
+
+                for (int i = 0; i < _count; i++) {
+                    _span[i].Transmute(_conversation, _type);
                 }
             }
 
@@ -230,12 +247,16 @@ namespace EnhancedFramework.Conversations {
                 // ----- Local Method ----- \\
 
                 void UpdateLink(ConversationNode _root) {
-                    for (int i = 0; i < _root.nodes.Length; i++) {
-                        if (_root.nodes[i] == this) {
-                            _root.nodes[i] = _node;
+
+                    ref ConversationNode[] _span = ref _root.nodes;
+                    int _count = _span.Length;
+
+                    for (int i = 0; i < _count; i++) {
+                        if (_span[i] == this) {
+                            _span[i] = _node;
                         }
 
-                        UpdateLink(_root.nodes[i]);
+                        UpdateLink(_span[i]);
                     }
                 }
 
@@ -291,8 +312,9 @@ namespace EnhancedFramework.Conversations {
                 return;
             }
 
-            for (int i = NodeCount; i-- > 0;) {
-                GetNodeAt(i).GetLocalizationTables(_stringTables, _assetTables);
+            ref ConversationNode[] _span = ref GetNodeRefs();
+            for (int i = _span.Length; i-- > 0;) {
+                _span[i].GetLocalizationTables(_stringTables, _assetTables);
             }
         }
         #endif

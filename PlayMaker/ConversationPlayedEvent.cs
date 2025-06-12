@@ -15,8 +15,8 @@ namespace EnhancedFramework.Conversations.PlayMaker {
     /// <see cref="FsmStateAction"/> used to send an event when a <see cref="Conversations.Conversation"/> is being played.
     /// </summary>
     [Tooltip("Sends an Event when a Conversation starts being played")]
-    [ActionCategory("Conversation")]
-    public sealed class ConversationPlayedEvent : FsmStateAction {
+    [ActionCategory(CategoryName)]
+    public sealed class ConversationPlayedEvent : BaseConversationFSM {
         #region Global Members
         // -------------------------------------------
         // Variable - Event
@@ -62,7 +62,9 @@ namespace EnhancedFramework.Conversations.PlayMaker {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Behaviour
+        // -------------------------------------------
 
         private void OnPlayed(Conversation _conversation, ConversationPlayer _player) {
             Fsm.Event(PlayedEvent);

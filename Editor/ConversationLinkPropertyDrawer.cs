@@ -44,7 +44,7 @@ namespace EnhancedFramework.Conversations.Editor {
             ConversationNode _node = ConversationEditorWindow.GetSelectedNode();
 
             // Null link management.
-            if ((_node == null) || !(_node is ConversationLink _linkNode)) {
+            if ((_node == null) || (_node is not ConversationLink _linkNode)) {
                 return _height;
             }
 
